@@ -1,36 +1,42 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CRM para equipos comerciales de cerveza artesanal
 
-## Getting Started
+Web app móvil para que los KAMs registren su trabajo de campo y los managers vean,
+cada semana, cómo avanza el pipeline de su equipo. Nombre comercial por definir.
 
-First, run the development server:
+## Qué hay en este proyecto
+
+| Carpeta o archivo | Qué es |
+| --- | --- |
+| `src/app/` | Las pantallas de la app. Cada carpeta dentro es una ruta (`/cuentas`, `/mapa`, etc.). |
+| `supabase/migrations/` | El esquema de la base de datos: tablas, reglas de negocio y seguridad. |
+| `supabase/tests/` | Pruebas que verifican que las reglas de seguridad funcionan. |
+| `package.json` | La lista de librerías que usa el proyecto y los comandos disponibles. |
+| `public/` | Imágenes e íconos. |
+
+## Cómo está pensada la seguridad
+
+Cada registro pertenece a una **empresa** (cliente). La base de datos, no la app,
+decide quién ve qué:
+
+- Un **KAM** solo ve y registra actividad en sus propias cuentas.
+- Un **manager** ve todo lo de su empresa y aprueba reasignaciones y bajas.
+- El **auditor** ve todas las empresas.
+
+Además, la base de datos:
+
+- Impide que un KAM reasigne una cuenta o la dé por perdida sin aprobación.
+- Guarda solo el historial de cambios de etapa.
+- Exige un motivo cuando una visita se registra lejos de la cuenta.
+- Esconde las notas privadas del auditor a los KAMs.
+
+## Comandos
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install      # instala las librerías (solo la primera vez)
+npm run dev      # abre la app en modo desarrollo en http://localhost:3000
+npm run test:db  # prueba el esquema y las reglas de seguridad
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Stack
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Next.js · Supabase (Postgres, login y seguridad por filas) · Vercel · Leaflet + OpenStreetMap · Resend
