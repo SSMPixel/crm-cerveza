@@ -16,6 +16,7 @@ import {
   useMap,
 } from "react-leaflet";
 import type { EstadoSeguimiento } from "@/lib/formato";
+import { useTemaOscuro } from "@/lib/useTemaOscuro";
 
 export type PuntoMapa = {
   id: string;
@@ -83,6 +84,8 @@ export default function MapaLeaflet({
     ...(yo ? [[yo.lat, yo.lng] as [number, number]] : []),
     ...ruta.map((r) => [r.lat, r.lng] as [number, number]),
   ];
+  const oscuro = useTemaOscuro();
+  const estilo = oscuro ? "streets-v2-dark" : "streets-v2";
   const encuadre =
     ruta.length > 0
       ? linea
@@ -99,8 +102,9 @@ export default function MapaLeaflet({
       {llaveMapTiler ? (
         // Mapa nítido (alta resolución) cuando hay llave de MapTiler.
         <TileLayer
+          key={estilo}
           attribution='&copy; <a href="https://www.maptiler.com/copyright/">MapTiler</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url={`https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}@2x.png?key=${llaveMapTiler}`}
+          url={`https://api.maptiler.com/maps/${estilo}/{z}/{x}/{y}@2x.png?key=${llaveMapTiler}`}
           tileSize={512}
           zoomOffset={-1}
           minZoom={1}
@@ -109,6 +113,7 @@ export default function MapaLeaflet({
       ) : (
         // Respaldo sin llave, suficiente para pruebas.
         <TileLayer
+          className="mosaico-osm"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
           maxZoom={19}
@@ -143,7 +148,11 @@ export default function MapaLeaflet({
       {linea.length > 1 && (
         <Polyline
           positions={linea}
-          pathOptions={{ color: "#15803d", weight: 3, dashArray: "6 8" }}
+          pathOptions={{
+            color: oscuro ? "#4ade80" : "#15803d",
+            weight: 3,
+            dashArray: "6 8",
+          }}
         />
       )}
 

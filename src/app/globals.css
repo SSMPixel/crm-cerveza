@@ -6,6 +6,34 @@
     sans-serif;
 }
 
+/* ---------- Mapa: controles y burbujas con los colores de la app ---------- */
+/* ":root" les da prioridad sobre los estilos de fábrica de Leaflet. */
+:root .leaflet-container {
+  background: var(--color-stone-200);
+  font-family: var(--font-sans);
+}
+:root .leaflet-popup-content-wrapper,
+:root .leaflet-popup-tip,
+:root .leaflet-bar a,
+:root .leaflet-bar a:hover {
+  background: var(--color-white);
+  color: var(--color-stone-900);
+  border-color: var(--color-stone-200);
+}
+:root .leaflet-popup-content-wrapper a {
+  color: var(--color-stone-900);
+}
+:root .leaflet-container a.leaflet-popup-close-button {
+  color: var(--color-stone-500);
+}
+:root .leaflet-control-attribution.leaflet-control {
+  background: color-mix(in srgb, var(--color-white) 80%, transparent);
+  color: var(--color-stone-600);
+}
+:root .leaflet-control-attribution a {
+  color: var(--color-stone-700);
+}
+
 /* ---------- Modo oscuro ----------
    Sigue al dispositivo, salvo que la persona elija "Claro" u "Oscuro" en Mi perfil
    (eso se guarda como data-tema en <html>). */
