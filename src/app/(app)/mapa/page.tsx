@@ -2,6 +2,8 @@ import { Suspense } from "react";
 import { crearClienteServidor } from "@/lib/supabase/server";
 import { inicioDeHoyMx } from "@/lib/formato";
 import { obtenerPerfil } from "@/lib/sesion";
+import { empresaEnVista } from "@/lib/clienteActivo";
+import { redirect } from "next/navigation";
 import { elegirPlan, ordenarRuta } from "@/lib/ruta";
 import { camposCuenta, type Cuenta } from "@/components/TarjetaCuenta";
 import { VistaMapa } from "@/components/mapa/VistaMapa";
@@ -22,7 +24,11 @@ async function Contenido() {
     );
 
   const supabase = await crearClienteServidor();
-  const { data } = await supabase.from("vista_cuentas").select(camposCuenta);
+  const empresaId = await empresaEnVista(perfil);
+  if (perfil.rol === "auditor" && !empresaId) redirect("/clientes");
+  let qCuentas = supabase.from("vista_cuentas").select(camposCuenta);
+  if (empresaId) qCuentas = qCuentas.eq("empresa_id", empresaId);
+  const { data } = await qCuentas;
   const cuentas = (data ?? []) as Cuenta[];
 
   let plan: Cuenta[] = [];

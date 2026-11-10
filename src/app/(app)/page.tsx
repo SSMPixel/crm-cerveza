@@ -15,6 +15,9 @@ import {
 } from "@/components/TarjetaCuenta";
 import { cerrarSesion } from "../login/acciones";
 import { elegirPlan, ordenarRuta } from "@/lib/ruta";
+import { redirect } from "next/navigation";
+import { empresaEnVista } from "@/lib/clienteActivo";
+import { AlertasDelCliente } from "@/components/auditor/AlertasDelCliente";
 
 export default function Inicio() {
   return (
@@ -44,6 +47,10 @@ async function Contenido() {
     );
   }
 
+  // El auditor primero elige qué cliente ver.
+  const empresaId = await empresaEnVista(perfil);
+  if (perfil.rol === "auditor" && !empresaId) redirect("/clientes");
+
   return (
     <>
       <p className="text-sm text-stone-600">
@@ -51,7 +58,14 @@ async function Contenido() {
         {perfil.empresa ? ` · ${perfil.empresa}` : ""}
       </p>
       <h1 className="text-2xl font-semibold">Hola, {perfil.nombre}</h1>
-      {perfil.rol === "kam" ? <DiaDelKam perfil={perfil} /> : <ResumenEquipo />}
+      {perfil.rol === "kam" ? (
+        <DiaDelKam perfil={perfil} />
+      ) : (
+        <ResumenEquipo
+          empresaId={empresaId}
+          esAuditor={perfil.rol === "auditor"}
+        />
+      )}
       <CerrarSesion />
     </>
   );
@@ -217,25 +231,37 @@ type VisitaHoy = {
   pedidos: { monto_mxn: number }[];
 };
 
-async function ResumenEquipo() {
+async function ResumenEquipo({
+  empresaId,
+  esAuditor,
+}: {
+  empresaId: string | null;
+  esAuditor: boolean;
+}) {
   const supabase = await crearClienteServidor();
+  let qCuentas = supabase
+    .from("vista_cuentas")
+    .select("kam_id, estado_seguimiento");
+  let qVisitas = supabase
+    .from("visitas")
+    .select(
+      "id, fecha_hora, fuera_de_rango, motivo_fuera_rango, nota, kam_id, cuenta_id, cuentas(nombre, zona), pedidos(monto_mxn)",
+    )
+    .gte("fecha_hora", inicioDeHoyMx())
+    .order("fecha_hora", { ascending: false });
+  let qKams = supabase
+    .from("perfiles")
+    .select("id, nombre, meta_visitas_dia, empresas(meta_visitas_dia)")
+    .eq("rol", "kam")
+    .eq("activo", true)
+    .order("nombre");
+  if (empresaId) {
+    qCuentas = qCuentas.eq("empresa_id", empresaId);
+    qVisitas = qVisitas.eq("empresa_id", empresaId);
+    qKams = qKams.eq("empresa_id", empresaId);
+  }
   const [{ data: cuentasData }, { data: visitasData }, { data: kamsData }] =
-    await Promise.all([
-      supabase.from("vista_cuentas").select("kam_id, estado_seguimiento"),
-      supabase
-        .from("visitas")
-        .select(
-          "id, fecha_hora, fuera_de_rango, motivo_fuera_rango, nota, kam_id, cuenta_id, cuentas(nombre, zona), pedidos(monto_mxn)",
-        )
-        .gte("fecha_hora", inicioDeHoyMx())
-        .order("fecha_hora", { ascending: false }),
-      supabase
-        .from("perfiles")
-        .select("id, nombre, meta_visitas_dia, empresas(meta_visitas_dia)")
-        .eq("rol", "kam")
-        .eq("activo", true)
-        .order("nombre"),
-    ]);
+    await Promise.all([qCuentas, qVisitas, qKams]);
 
   const cuentas = cuentasData ?? [];
   const visitas = (visitasData ?? []) as unknown as VisitaHoy[];
@@ -269,6 +295,8 @@ async function ResumenEquipo() {
 
   return (
     <>
+      {esAuditor && empresaId && <AlertasDelCliente empresaId={empresaId} />}
+
       {/* ---------- Hoy en campo ---------- */}
       <section className="mt-6 rounded-xl border border-stone-200 bg-white p-4">
         <div className="flex items-baseline justify-between">

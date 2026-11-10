@@ -2,6 +2,8 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { crearClienteServidor } from "@/lib/supabase/server";
 import { obtenerPerfil } from "@/lib/sesion";
+import { empresaEnVista } from "@/lib/clienteActivo";
+import { redirect } from "next/navigation";
 import { estados, type EstadoSeguimiento } from "@/lib/formato";
 import {
   TarjetaCuenta,
@@ -45,6 +47,8 @@ async function ListaCuentas({
   const { kam } = await searchParams;
   const kamFiltro = typeof kam === "string" ? kam : null;
   const veEquipo = perfil.rol !== "kam";
+  const empresaId = await empresaEnVista(perfil);
+  if (perfil.rol === "auditor" && !empresaId) redirect("/clientes");
 
   const supabase = await crearClienteServidor();
   let consulta = supabase
@@ -53,6 +57,7 @@ async function ListaCuentas({
     .order("categoria")
     .order("nombre");
   if (veEquipo && kamFiltro) consulta = consulta.eq("kam_id", kamFiltro);
+  if (empresaId) consulta = consulta.eq("empresa_id", empresaId);
 
   const { data, error } = await consulta;
   if (error) {
@@ -67,12 +72,14 @@ async function ListaCuentas({
   // Lista de KAMs para el filtro del manager / auditor.
   let kams: { id: string; nombre: string }[] = [];
   if (veEquipo) {
-    const { data: equipo } = await supabase
+    let qEquipo = supabase
       .from("perfiles")
       .select("id, nombre")
       .eq("rol", "kam")
       .eq("activo", true)
       .order("nombre");
+    if (empresaId) qEquipo = qEquipo.eq("empresa_id", empresaId);
+    const { data: equipo } = await qEquipo;
     kams = equipo ?? [];
   }
 
