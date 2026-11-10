@@ -55,6 +55,14 @@ function sumarDias(fecha: string, dias: number) {
   return d.toISOString().slice(0, 10);
 }
 
+// La fecha elegida, dicha en español (el calendario del celular puede estar en inglés).
+const fechaLarga = new Intl.DateTimeFormat("es-MX", {
+  timeZone: "UTC",
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+});
+
 const estiloCampo =
   "mt-1 block w-full rounded-lg border border-stone-300 bg-white px-3 py-3 text-base focus:border-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-700/20";
 
@@ -364,6 +372,11 @@ export function FormVisita(p: Props) {
             className={estiloCampo}
           />
         </label>
+        {fecha && (
+          <p className="mt-1 text-sm text-stone-600 first-letter:uppercase">
+            {fechaLarga.format(new Date(`${fecha}T12:00:00Z`))}
+          </p>
+        )}
         {errores.fecha && (
           <p role="alert" className="mt-1.5 text-sm font-medium text-red-700">
             {errores.fecha}

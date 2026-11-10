@@ -10,6 +10,8 @@ import { ligasFotos } from "@/lib/fotos";
 import { Miniaturas } from "@/components/Miniaturas";
 import { BotonDescargar } from "@/components/BotonDescargar";
 
+export const metadata = { title: "Historial" };
+
 const mxn = new Intl.NumberFormat("es-MX", {
   style: "currency",
   currency: "MXN",

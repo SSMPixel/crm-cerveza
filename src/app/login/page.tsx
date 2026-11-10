@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { iniciarSesion, type EstadoLogin } from "./acciones";
+import { CampoContrasena } from "@/components/CampoContrasena";
 
 export default function PaginaLogin() {
   const [estado, accion, enviando] = useActionState<EstadoLogin, FormData>(
@@ -36,11 +37,9 @@ export default function PaginaLogin() {
             <span className="text-sm font-medium text-stone-800">
               Contraseña
             </span>
-            <input
+            <CampoContrasena
               name="contrasena"
-              type="password"
               autoComplete="current-password"
-              required
               className="mt-1 block w-full rounded-lg border border-stone-300 bg-white px-3 py-3 text-base text-stone-900 focus:border-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-700/20"
             />
           </label>

@@ -8,6 +8,8 @@ import { elegirPlan, ordenarRuta } from "@/lib/ruta";
 import { camposCuenta, type Cuenta } from "@/components/TarjetaCuenta";
 import { VistaMapa } from "@/components/mapa/VistaMapa";
 
+export const metadata = { title: "Mapa" };
+
 export default function PaginaMapa() {
   return (
     <Suspense fallback={<p className="p-4 text-stone-500">Cargando mapa…</p>}>

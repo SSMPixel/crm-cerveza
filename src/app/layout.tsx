@@ -2,7 +2,8 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "CRM Cervecero",
+  title: { default: "CRM Cervecero", template: "%s · CRM Cervecero" },
+  appleWebApp: { capable: true, title: "CRM", statusBarStyle: "default" },
   description: "Pipeline y visitas del equipo comercial",
 };
 

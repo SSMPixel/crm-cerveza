@@ -8,6 +8,8 @@ import { AvisarManager } from "@/components/auditor/AvisarManager";
 import { cerrarSesion } from "../../login/acciones";
 import { entrarCliente } from "./acciones";
 
+export const metadata = { title: "Mis clientes" };
+
 const mxn = new Intl.NumberFormat("es-MX", {
   style: "currency",
   currency: "MXN",

@@ -6,6 +6,8 @@ import { obtenerPerfil } from "@/lib/sesion";
 import { kamsDeEmpresa } from "@/lib/equipo";
 import { FormCuenta } from "@/components/FormCuenta";
 
+export const metadata = { title: "Editar cuenta" };
+
 export default function PaginaEditarCuenta(
   props: PageProps<"/cuentas/[id]/editar">,
 ) {

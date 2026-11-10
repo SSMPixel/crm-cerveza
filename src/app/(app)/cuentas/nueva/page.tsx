@@ -6,6 +6,8 @@ import { empresaEnVista } from "@/lib/clienteActivo";
 import { kamsDeEmpresa } from "@/lib/equipo";
 import { FormCuenta } from "@/components/FormCuenta";
 
+export const metadata = { title: "Nueva cuenta" };
+
 export default function PaginaNuevaCuenta() {
   return (
     <main className="px-4 py-6">

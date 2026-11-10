@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { crearClienteServidor } from "@/lib/supabase/server";
 import { obtenerPerfil } from "@/lib/sesion";
 import { BotonDescargar } from "@/components/BotonDescargar";
+import { BuscadorCuentas } from "@/components/BuscadorCuentas";
 import { empresaEnVista } from "@/lib/clienteActivo";
 import { redirect } from "next/navigation";
 import { estados, type EstadoSeguimiento } from "@/lib/formato";
@@ -11,6 +12,8 @@ import {
   camposCuenta,
   type Cuenta,
 } from "@/components/TarjetaCuenta";
+
+export const metadata = { title: "Cuentas" };
 
 const ordenEstados: EstadoSeguimiento[] = [
   "vencida",
@@ -45,8 +48,16 @@ async function ListaCuentas({
     );
   }
 
-  const { kam } = await searchParams;
+  const { kam, q } = await searchParams;
   const kamFiltro = typeof kam === "string" ? kam : null;
+  // Se quitan caracteres que tienen significado especial en la búsqueda.
+  const busqueda =
+    typeof q === "string"
+      ? q
+          .replace(/[%,()*\\]/g, " ")
+          .trim()
+          .slice(0, 60)
+      : "";
   const veEquipo = perfil.rol !== "kam";
   const empresaId = await empresaEnVista(perfil);
   if (perfil.rol === "auditor" && !empresaId) redirect("/clientes");
@@ -59,6 +70,11 @@ async function ListaCuentas({
     .order("nombre");
   if (veEquipo && kamFiltro) consulta = consulta.eq("kam_id", kamFiltro);
   if (empresaId) consulta = consulta.eq("empresa_id", empresaId);
+  if (busqueda) {
+    consulta = consulta.or(
+      `nombre.ilike.*${busqueda}*,zona.ilike.*${busqueda}*`,
+    );
+  }
 
   const { data, error } = await consulta;
   if (error) {
@@ -110,6 +126,8 @@ async function ListaCuentas({
         {cuentas.length} cuentas · lo más urgente arriba
       </p>
 
+      <BuscadorCuentas />
+
       {veEquipo && kams.length > 0 && (
         <div className="-mx-4 mt-4 flex gap-2 overflow-x-auto px-4 pb-1">
           <Filtro href="/cuentas" activo={!kamFiltro} texto="Todos" />
@@ -125,7 +143,11 @@ async function ListaCuentas({
       )}
 
       {cuentas.length === 0 && (
-        <p className="mt-8 text-stone-600">Todavía no hay cuentas asignadas.</p>
+        <p className="mt-8 text-stone-600">
+          {busqueda
+            ? `Ninguna cuenta coincide con "${busqueda}".`
+            : "Todavía no hay cuentas asignadas."}
+        </p>
       )}
 
       {ordenEstados.map((estado) => {

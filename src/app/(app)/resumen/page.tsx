@@ -8,6 +8,8 @@ import { datosResumen } from "@/lib/resumen";
 import { htmlResumen } from "@/lib/correoResumen";
 import { enviarmePrueba, guardarHorario } from "./acciones";
 
+export const metadata = { title: "Resumen semanal" };
+
 const dias = [
   "Lunes",
   "Martes",

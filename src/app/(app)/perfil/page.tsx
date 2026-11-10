@@ -3,6 +3,9 @@ import { obtenerPerfil } from "@/lib/sesion";
 import { nombreRol } from "@/lib/formato";
 import { cerrarSesion } from "../../login/acciones";
 import { cambiarContrasena } from "./acciones";
+import { CampoContrasena } from "@/components/CampoContrasena";
+
+export const metadata = { title: "Mi perfil" };
 
 const errores: Record<string, string> = {
   corta: "La contraseña debe tener al menos 8 caracteres.",
@@ -66,18 +69,16 @@ async function Contenido({
         <h2 className="font-semibold">Cambiar contraseña</h2>
         <label className="block">
           <span className="text-sm">Nueva contraseña</span>
-          <input
+          <CampoContrasena
             name="nueva"
-            type="password"
             autoComplete="new-password"
             className={estilo}
           />
         </label>
         <label className="block">
           <span className="text-sm">Repítela</span>
-          <input
+          <CampoContrasena
             name="confirmar"
-            type="password"
             autoComplete="new-password"
             className={estilo}
           />

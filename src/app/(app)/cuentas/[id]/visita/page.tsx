@@ -6,6 +6,8 @@ import { obtenerPerfil } from "@/lib/sesion";
 import { FormVisita } from "./FormVisita";
 import { hoyMx } from "@/lib/formato";
 
+export const metadata = { title: "Registrar visita" };
+
 export default function PaginaVisita(props: PageProps<"/cuentas/[id]/visita">) {
   return (
     <main className="px-4 py-6">

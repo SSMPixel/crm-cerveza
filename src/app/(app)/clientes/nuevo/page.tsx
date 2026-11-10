@@ -4,6 +4,8 @@ import { Suspense } from "react";
 import { obtenerPerfil } from "@/lib/sesion";
 import { FormNuevoCliente } from "./FormNuevoCliente";
 
+export const metadata = { title: "Nuevo cliente" };
+
 export default function PaginaNuevoCliente() {
   return (
     <main className="px-4 py-6">

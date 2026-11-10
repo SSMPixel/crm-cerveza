@@ -7,6 +7,8 @@ import { nombreRol } from "@/lib/formato";
 import { FormAltaPersona } from "@/components/FormAltaPersona";
 import { agregarPersona, guardarAjustes, guardarPersona } from "./acciones";
 
+export const metadata = { title: "Equipo y ajustes" };
+
 const estilo =
   "mt-1 block w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-base focus:border-amber-700 focus:outline-none";
 
