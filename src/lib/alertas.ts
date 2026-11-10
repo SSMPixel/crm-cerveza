@@ -9,6 +9,7 @@ export type Alerta = {
   severidad: Severidad;
   titulo: string; // lo que ve el auditor
   mensaje: string; // texto listo para mandarle al manager
+  enlace?: string; // dónde ver la evidencia
 };
 
 export type DatosCliente = {
@@ -50,6 +51,7 @@ export function calcularAlertas(d: DatosCliente): Alerta[] {
       alertas.push({
         severidad: fuera >= 5 ? "alta" : "media",
         titulo: `${k.nombre}: ${fuera} de ${suyas.length} visitas fuera de rango en 7 días`,
+        enlace: `/visitas?kam=${k.id}&dias=7&fuera=1`,
         mensaje: `Hola, revisando la actividad de la semana: ${k.nombre} lleva ${fuera} de ${suyas.length} visitas registradas lejos de la cuenta. Valdría la pena revisar con ${k.nombre} los motivos.`,
       });
     }
@@ -64,12 +66,14 @@ export function calcularAlertas(d: DatosCliente): Alerta[] {
       alertas.push({
         severidad: "alta",
         titulo: `${k.nombre}: sin visitas en 7 días`,
+        enlace: `/visitas?kam=${k.id}&dias=30`,
         mensaje: `Hola, veo que ${k.nombre} no ha registrado visitas en los últimos 7 días. ¿Está de vacaciones o hay algo que debamos revisar?`,
       });
     } else if (dias >= 3) {
       alertas.push({
         severidad: "media",
         titulo: `${k.nombre}: ${dias} días sin registrar visitas`,
+        enlace: `/visitas?kam=${k.id}&dias=30`,
         mensaje: `Hola, ${k.nombre} lleva ${dias} días sin registrar visitas. ¿Todo bien?`,
       });
     }
@@ -82,6 +86,7 @@ export function calcularAlertas(d: DatosCliente): Alerta[] {
       alertas.push({
         severidad: "baja",
         titulo: `${k.nombre}: ${suyas.length} visitas sin mover ninguna etapa`,
+        enlace: `/visitas?kam=${k.id}&dias=7`,
         mensaje: `Hola, ${k.nombre} está visitando bien (${suyas.length} visitas en la semana) pero ninguna cuenta avanzó de etapa. Puede ser buen momento para revisar juntos su pipeline.`,
       });
     }

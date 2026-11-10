@@ -7,6 +7,7 @@ const secciones = [
   { href: "/", texto: "Inicio" },
   { href: "/mapa", texto: "Mapa" },
   { href: "/cuentas", texto: "Cuentas" },
+  { href: "/visitas", texto: "Historial" },
 ];
 
 // Barra fija abajo, al alcance del pulgar.

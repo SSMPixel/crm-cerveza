@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Alerta } from "@/lib/alertas";
 import { AvisarManager } from "./AvisarManager";
 
@@ -34,7 +35,15 @@ export function ListaAlertas({
           className={`rounded-lg border border-l-4 border-stone-200 bg-white p-3 ${estilo[a.severidad]}`}
         >
           <p className="text-sm font-medium text-stone-900">{a.titulo}</p>
-          <div className="mt-2">
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            {a.enlace && (
+              <Link
+                href={a.enlace}
+                className="rounded-md bg-stone-100 px-2.5 py-1 text-xs font-medium text-stone-800"
+              >
+                Ver detalle
+              </Link>
+            )}
             <AvisarManager
               compacto
               managers={managers}
