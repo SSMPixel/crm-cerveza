@@ -2,7 +2,7 @@ import { PGlite } from '@electric-sql/pglite';
 import fs from 'fs';
 
 const db = new PGlite();
-const sql = fs.readFileSync(process.argv[2], 'utf8');
+const archivos = process.argv.slice(2);
 
 // Simular lo que Supabase ya trae: esquema auth, auth.users, auth.uid() y el rol "authenticated".
 await db.exec(`
@@ -12,7 +12,7 @@ await db.exec(`
     $$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
   create role authenticated;
 `);
-await db.exec(sql);
+for (const f of archivos) await db.exec(fs.readFileSync(f, 'utf8'));
 await db.exec(`
   grant usage on schema public, auth to authenticated;
   grant all on all tables in schema public to authenticated;
@@ -105,6 +105,25 @@ check('Manager ve ambos', r.rows?.length === 2);
 
 r = await as(U.k1, `insert into perfiles (id, empresa_id, nombre, correo, rol) values ('${U.k3}', '${E1}', 'x', 'x', 'manager')`);
 check('KAM NO puede crear usuarios ni ascenderse', !!r.error);
+
+// ---------- Vista de cuentas y estado de seguimiento ----------
+await db.exec(`reset role;`);
+r = await as(U.k2, 'select nombre from vista_cuentas');
+check('Vista: KAM 2 solo ve su cuenta', r.rows?.length === 1 && r.rows[0].nombre === 'Bar del KAM 2');
+r = await as(U.aud, `select estado_seguimiento from vista_cuentas where nombre = 'Bar del KAM 2'`);
+check('Vista: cuenta B recién creada está al día', r.rows?.[0]?.estado_seguimiento === 'al_dia');
+r = await as(U.aud, `select estado_seguimiento from vista_cuentas where nombre = 'Bar del KAM 1'`);
+check('Vista: cuenta perdida queda cerrada', r.rows?.[0]?.estado_seguimiento === 'cerrada');
+await db.exec(`reset role; update cuentas set creada_en = now() - interval '20 days' where nombre = 'Bar del KAM 2';`);
+r = await as(U.aud, `select estado_seguimiento from vista_cuentas where nombre = 'Bar del KAM 2'`);
+check('Vista: cuenta B sin visita en 20 días está vencida', r.rows?.[0]?.estado_seguimiento === 'vencida');
+const cuenta2 = (await as(U.aud, `select id from cuentas where nombre = 'Bar del KAM 2'`)).rows[0].id;
+await db.exec(`reset role; insert into visitas (empresa_id, cuenta_id, kam_id, fecha_hora) values ('${E1}', '${cuenta2}', '${U.k2}', now() - interval '3 days');`);
+r = await as(U.aud, `select estado_seguimiento, dias_sin_visita from vista_cuentas where nombre = 'Bar del KAM 2'`);
+check('Vista: visita hace 3 días la pone al día', r.rows?.[0]?.estado_seguimiento === 'al_dia' && r.rows[0].dias_sin_visita === 3);
+await db.exec(`reset role; insert into proximas_acciones (empresa_id, cuenta_id, kam_id, descripcion, fecha_compromiso) values ('${E1}', '${cuenta2}', '${U.k2}', 'Llevar degustación', hoy_mx());`);
+r = await as(U.aud, `select estado_seguimiento, accion_descripcion from vista_cuentas where nombre = 'Bar del KAM 2'`);
+check('Vista: próxima acción para hoy marca "hoy"', r.rows?.[0]?.estado_seguimiento === 'hoy' && r.rows[0].accion_descripcion === 'Llevar degustación');
 
 console.log(`\n${ok} correctas, ${fail} fallas`);
 process.exit(fail ? 1 : 0);

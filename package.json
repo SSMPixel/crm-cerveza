@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:db": "node supabase/tests/reglas.test.mjs supabase/migrations/0001_esquema_inicial.sql"
+    "test:db": "node supabase/tests/reglas.test.mjs supabase/migrations/0001_esquema_inicial.sql supabase/migrations/0002_vista_cuentas.sql"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
