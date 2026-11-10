@@ -4,6 +4,7 @@ import { useActionState, useEffect, useState } from "react";
 import { distanciaMetros, textoDistancia } from "@/lib/geo";
 import { nombreEtapa, hoyMx } from "@/lib/formato";
 import { registrarVisita, type EstadoVisita } from "./acciones";
+import { AvancePedidos } from "@/components/AvancePedidos";
 
 type Props = {
   cuentaId: string;
@@ -12,6 +13,8 @@ type Props = {
   radio: number;
   etapaActual: string;
   accionPendiente: string | null;
+  pedidosMes: number;
+  objetivo: number | null;
 };
 
 type Ubicacion =
@@ -60,6 +63,8 @@ export function FormVisita(p: Props) {
   const [intento, setIntento] = useState(0);
   const [motivo, setMotivo] = useState("");
   const [fecha, setFecha] = useState("");
+  const [monto, setMonto] = useState("");
+  const montoNumero = Number(monto.replace(/[$,\s]/g, "")) || 0;
   const hoy = hoyMx();
 
   // Algunos navegadores viejos no dan ubicación: se detecta sin esperar.
@@ -93,11 +98,19 @@ export function FormVisita(p: Props) {
     : ubicacion;
 
   const distancia =
-    ubicacionActual.estado === "lista" && p.cuentaLat !== null && p.cuentaLng !== null
-      ? distanciaMetros(p.cuentaLat, p.cuentaLng, ubicacionActual.lat, ubicacionActual.lng)
+    ubicacionActual.estado === "lista" &&
+    p.cuentaLat !== null &&
+    p.cuentaLng !== null
+      ? distanciaMetros(
+          p.cuentaLat,
+          p.cuentaLng,
+          ubicacionActual.lat,
+          ubicacionActual.lng,
+        )
       : null;
   const pideMotivo =
-    ubicacionActual.estado === "error" || (distancia !== null && distancia > p.radio);
+    ubicacionActual.estado === "error" ||
+    (distancia !== null && distancia > p.radio);
 
   return (
     <form action={accion} className="mt-6 space-y-6">
@@ -262,21 +275,34 @@ export function FormVisita(p: Props) {
           </select>
         </label>
 
-        <label className="block">
-          <span className="font-medium">Pedido</span>{" "}
-          <span className="text-sm text-stone-500">(opcional)</span>
-          <div className="relative">
-            <span className="pointer-events-none absolute inset-y-0 left-3 mt-1 flex items-center text-stone-500">
-              $
-            </span>
-            <input
-              name="monto"
-              inputMode="decimal"
-              placeholder="0"
-              className={`${estiloCampo} pl-7`}
-            />
-          </div>
-        </label>
+        <div className="rounded-xl border border-stone-200 bg-white p-4">
+          <label className="block">
+            <span className="font-medium">Pedido</span>{" "}
+            <span className="text-sm text-stone-500">(opcional)</span>
+            <div className="relative">
+              <span className="pointer-events-none absolute inset-y-0 left-3 mt-1 flex items-center text-stone-500">
+                $
+              </span>
+              <input
+                name="monto"
+                inputMode="decimal"
+                placeholder="0"
+                value={monto}
+                onChange={(e) => setMonto(e.target.value)}
+                className={`${estiloCampo} pl-7`}
+              />
+            </div>
+          </label>
+          {(p.objetivo !== null || p.pedidosMes > 0) && (
+            <div className="mt-3">
+              <AvancePedidos
+                compacto
+                pedidosMes={p.pedidosMes + montoNumero}
+                objetivo={p.objetivo}
+              />
+            </div>
+          )}
+        </div>
 
         <label className="block">
           <span className="font-medium">Nota</span>{" "}

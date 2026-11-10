@@ -9,22 +9,19 @@ import {
   estiloCategoria,
   nombreEtapa,
   textoFechaAccion,
+  textoFechaPasada,
   textoUltimaVisita,
   type EstadoSeguimiento,
 } from "@/lib/formato";
 import { ligaComoLlegar, textoDistancia } from "@/lib/geo";
+import { ligaCorreo, ligaLlamada, ligaWhatsApp } from "@/lib/contacto";
+import { AvancePedidos } from "@/components/AvancePedidos";
 
 const nombreObjetivo: Record<string, string> = {
   grifo: "Grifo",
   carta: "En carta",
   exhibicion: "Exhibición",
 };
-
-const formatoMxn = new Intl.NumberFormat("es-MX", {
-  style: "currency",
-  currency: "MXN",
-  maximumFractionDigits: 0,
-});
 
 const formatoFecha = new Intl.DateTimeFormat("es-MX", {
   timeZone: "America/Mexico_City",
@@ -61,27 +58,22 @@ async function DetalleCuenta({
   const perfil = await obtenerPerfil();
   const supabase = await crearClienteServidor();
 
-  const [
-    { data: c },
-    { data: visitas },
-    { data: objetivos },
-    { data: pedidos },
-  ] = await Promise.all([
-    supabase.from("vista_cuentas").select("*").eq("id", id).maybeSingle(),
-    supabase
-      .from("visitas")
-      .select(
-        "id, fecha_hora, distancia_m, fuera_de_rango, motivo_fuera_rango, nota",
-      )
-      .eq("cuenta_id", id)
-      .order("fecha_hora", { ascending: false })
-      .limit(5),
-    supabase
-      .from("objetivos_cuenta")
-      .select("tipo, logrado")
-      .eq("cuenta_id", id),
-    supabase.from("pedidos").select("fecha, monto_mxn").eq("cuenta_id", id),
-  ]);
+  const [{ data: c }, { data: visitas }, { data: objetivos }] =
+    await Promise.all([
+      supabase.from("vista_cuentas").select("*").eq("id", id).maybeSingle(),
+      supabase
+        .from("visitas")
+        .select(
+          "id, fecha_hora, distancia_m, fuera_de_rango, motivo_fuera_rango, nota",
+        )
+        .eq("cuenta_id", id)
+        .order("fecha_hora", { ascending: false })
+        .limit(5),
+      supabase
+        .from("objetivos_cuenta")
+        .select("tipo, logrado")
+        .eq("cuenta_id", id),
+    ]);
 
   if (!c) notFound();
 
@@ -89,10 +81,16 @@ async function DetalleCuenta({
   const puedeRegistrar =
     perfil?.rol === "kam" && c.kam_id === perfil.id && c.etapa !== "perdido";
   const comoLlegar = ligaComoLlegar(c.lat, c.lng, c.direccion);
-  const totalPedidos = (pedidos ?? []).reduce(
-    (s, p) => s + Number(p.monto_mxn),
-    0,
-  );
+  const atajos = [
+    { texto: "Llamar", href: ligaLlamada(c.contacto_telefono) },
+    { texto: "WhatsApp", href: ligaWhatsApp(c.contacto_telefono) },
+    { texto: "Correo", href: ligaCorreo(c.contacto_correo) },
+    { texto: "Cómo llegar", href: comoLlegar },
+  ].filter((a): a is { texto: string; href: string } => a.href !== null);
+  const muestraPedidos =
+    c.objetivo_mensual_mxn !== null ||
+    Number(c.pedidos_mes_mxn) > 0 ||
+    c.ultimo_pedido_mxn !== null;
 
   return (
     <>
@@ -152,7 +150,7 @@ async function DetalleCuenta({
         </section>
       )}
 
-      <div className="mt-4 grid gap-2">
+      <div className="mt-4 space-y-2">
         {puedeRegistrar && (
           <Link
             href={`/cuentas/${c.id}/visita`}
@@ -161,44 +159,58 @@ async function DetalleCuenta({
             Registrar visita
           </Link>
         )}
-        {comoLlegar && (
-          <a
-            href={comoLlegar}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block rounded-lg border border-stone-300 bg-white px-4 py-3 text-center font-medium text-stone-800"
+        {atajos.length > 0 && (
+          <div
+            className={`grid gap-2 ${atajos.length >= 4 ? "grid-cols-4" : atajos.length === 3 ? "grid-cols-3" : "grid-cols-2"}`}
           >
-            Cómo llegar
-          </a>
+            {atajos.map((a) => (
+              <a
+                key={a.texto}
+                href={a.href}
+                target={a.href.startsWith("http") ? "_blank" : undefined}
+                rel="noopener noreferrer"
+                className="rounded-lg border border-stone-300 bg-white px-1 py-2.5 text-center text-sm font-medium text-stone-800 active:bg-stone-50"
+              >
+                {a.texto}
+              </a>
+            ))}
+          </div>
         )}
       </div>
+
+      {muestraPedidos && (
+        <section className="mt-6">
+          <h2 className="font-semibold">Pedidos</h2>
+          <div className="mt-2">
+            <AvancePedidos
+              pedidosMes={Number(c.pedidos_mes_mxn)}
+              objetivo={
+                c.objetivo_mensual_mxn !== null
+                  ? Number(c.objetivo_mensual_mxn)
+                  : null
+              }
+              ultimoMonto={
+                c.ultimo_pedido_mxn !== null
+                  ? Number(c.ultimo_pedido_mxn)
+                  : null
+              }
+              ultimoTexto={
+                c.ultimo_pedido_fecha
+                  ? textoFechaPasada(c.ultimo_pedido_fecha)
+                  : null
+              }
+            />
+          </div>
+        </section>
+      )}
 
       <section className="mt-6">
         <h2 className="font-semibold">Datos</h2>
         <dl className="mt-2 divide-y divide-stone-100 rounded-xl border border-stone-200 bg-white text-sm">
           <Fila etiqueta="Dirección" valor={c.direccion} />
           <Fila etiqueta="Contacto" valor={c.contacto_nombre} />
-          <Fila
-            etiqueta="Teléfono"
-            valor={
-              c.contacto_telefono ? (
-                <a
-                  href={`tel:${c.contacto_telefono}`}
-                  className="text-amber-800"
-                >
-                  {c.contacto_telefono}
-                </a>
-              ) : null
-            }
-          />
-          <Fila
-            etiqueta="Pedidos reportados"
-            valor={
-              pedidos && pedidos.length > 0
-                ? `${pedidos.length} · ${formatoMxn.format(totalPedidos)}`
-                : null
-            }
-          />
+          <Fila etiqueta="Teléfono" valor={c.contacto_telefono} />
+          <Fila etiqueta="Correo" valor={c.contacto_correo} />
         </dl>
       </section>
 

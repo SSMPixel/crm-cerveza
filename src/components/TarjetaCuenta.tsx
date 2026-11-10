@@ -21,11 +21,12 @@ export type Cuenta = {
   accion_descripcion: string | null;
   accion_fecha: string | null;
   toca_visita: string;
+  visitada_hoy: boolean;
   estado_seguimiento: EstadoSeguimiento;
 };
 
 export const camposCuenta =
-  "id, nombre, tipo_lugar, zona, categoria, etapa, kam_id, kam_nombre, dias_sin_visita, accion_descripcion, accion_fecha, toca_visita, estado_seguimiento";
+  "id, nombre, tipo_lugar, zona, categoria, etapa, kam_id, kam_nombre, dias_sin_visita, accion_descripcion, accion_fecha, toca_visita, visitada_hoy, estado_seguimiento";
 
 export function TarjetaCuenta({
   cuenta: c,
@@ -65,9 +66,16 @@ export function TarjetaCuenta({
           <span className="rounded-md bg-amber-50 px-2 py-0.5 text-amber-900">
             {nombreEtapa[c.etapa] ?? c.etapa}
           </span>
-          <span className="text-stone-600">
-            {textoUltimaVisita(c.dias_sin_visita)}
-          </span>
+          {c.visitada_hoy ? (
+            <span className="flex items-center gap-1.5 font-medium text-green-700">
+              <span className="size-2 rounded-full bg-green-600" aria-hidden />
+              Visitada hoy
+            </span>
+          ) : (
+            <span className="text-stone-600">
+              {textoUltimaVisita(c.dias_sin_visita)}
+            </span>
+          )}
         </div>
 
         {c.accion_descripcion && c.accion_fecha && (

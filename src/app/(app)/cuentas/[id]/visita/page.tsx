@@ -29,7 +29,7 @@ async function Contenido({
   const { data: c } = await supabase
     .from("vista_cuentas")
     .select(
-      "id, nombre, kam_id, lat, lng, etapa, accion_descripcion, empresa_id",
+      "id, nombre, kam_id, lat, lng, etapa, accion_descripcion, empresa_id, pedidos_mes_mxn, objetivo_mensual_mxn",
     )
     .eq("id", id)
     .maybeSingle();
@@ -68,6 +68,12 @@ async function Contenido({
         radio={empresa?.radio_checkin_m ?? 300}
         etapaActual={c.etapa}
         accionPendiente={c.accion_descripcion}
+        pedidosMes={Number(c.pedidos_mes_mxn)}
+        objetivo={
+          c.objetivo_mensual_mxn !== null
+            ? Number(c.objetivo_mensual_mxn)
+            : null
+        }
       />
     </>
   );

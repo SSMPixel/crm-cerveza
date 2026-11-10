@@ -163,5 +163,18 @@ if (archivos.some(f => f.includes('0004'))) {
   check('Primera visita fija la ubicación del prospecto', r.rows?.[0]?.lat === 19.35);
 }
 
+// ---------- Pedidos del mes, visitada hoy, meta por KAM ----------
+if (archivos.some(f => f.includes('0005'))) {
+  r = await as(U.k2, `select pedidos_mes_mxn, ultimo_pedido_mxn, visitada_hoy from vista_cuentas where id = '${cuenta2}'`);
+  check('Vista: suma pedidos del mes y marca visitada hoy',
+    Number(r.rows?.[0]?.pedidos_mes_mxn) === 5200 && Number(r.rows[0].ultimo_pedido_mxn) === 5200 && r.rows[0].visitada_hoy === true);
+  r = await as(U.k2, `update perfiles set meta_visitas_dia = 1 where id = '${U.k2}' returning id`);
+  check('KAM no puede bajarse su propia meta', !r.rows?.length);
+  r = await as(U.man, `update perfiles set meta_visitas_dia = 3 where id = '${U.k2}' returning meta_visitas_dia`);
+  check('Manager ajusta la meta de su KAM', r.rows?.[0]?.meta_visitas_dia === 3);
+  r = await as(U.man, `update perfiles set meta_visitas_dia = 3 where id = '${U.k3}' returning id`);
+  check('Manager no toca KAMs de otra empresa', !r.rows?.length);
+}
+
 console.log(`\n${ok} correctas, ${fail} fallas`);
 process.exit(fail ? 1 : 0);

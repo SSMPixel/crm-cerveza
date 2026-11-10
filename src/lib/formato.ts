@@ -94,3 +94,11 @@ export const estiloCategoria: Record<string, string> = {
   B: "bg-amber-200 text-amber-950",
   C: "border border-stone-400 text-stone-600",
 };
+
+// "hoy", "ayer", "hace 5 días" para una fecha pasada "AAAA-MM-DD".
+export function textoFechaPasada(fecha: string): string {
+  const d = -diasDesdeHoy(fecha);
+  if (d <= 0) return "hoy";
+  if (d === 1) return "ayer";
+  return `hace ${d} días`;
+}
