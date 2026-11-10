@@ -26,6 +26,9 @@ export type PuntoMapa = {
   detalle: string;
 };
 
+// Llave pública de MapTiler (se restringe por dominio en su panel).
+const llaveMapTiler = process.env.NEXT_PUBLIC_MAPTILER_KEY;
+
 const colorEstado: Record<EstadoSeguimiento, string> = {
   vencida: "#f97316", // naranja
   hoy: "#16a34a", // verde
@@ -93,11 +96,24 @@ export default function MapaLeaflet({
       className="h-full w-full"
       attributionControl
     >
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-        maxZoom={19}
-      />
+      {llaveMapTiler ? (
+        // Mapa nítido (alta resolución) cuando hay llave de MapTiler.
+        <TileLayer
+          attribution='&copy; <a href="https://www.maptiler.com/copyright/">MapTiler</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+          url={`https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}@2x.png?key=${llaveMapTiler}`}
+          tileSize={512}
+          zoomOffset={-1}
+          minZoom={1}
+          maxZoom={20}
+        />
+      ) : (
+        // Respaldo sin llave, suficiente para pruebas.
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+          url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+          maxZoom={19}
+        />
+      )}
       <Encuadre puntos={encuadre} />
 
       {cuentas

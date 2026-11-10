@@ -66,6 +66,7 @@ export function FormVisita(p: Props) {
   const [fecha, setFecha] = useState("");
   const [monto, setMonto] = useState("");
   const montoNumero = Number(monto.replace(/[$,\s]/g, "")) || 0;
+  const [errores, setErrores] = useState<Record<string, string>>({});
   const hoy = p.hoy;
 
   // Algunos navegadores viejos no dan ubicación: se detecta sin esperar.
@@ -113,8 +114,55 @@ export function FormVisita(p: Props) {
     ubicacionActual.estado === "error" ||
     (distancia !== null && distancia > p.radio);
 
+  // Validación propia, con mensajes en español junto a cada campo
+  // (los avisos nativos del navegador se ven distintos en cada uno y a veces vacíos).
+  function validar(e: React.FormEvent<HTMLFormElement>) {
+    const fd = new FormData(e.currentTarget);
+    const nuevos: Record<string, string> = {};
+    if (pideMotivo && !fd.get("motivo"))
+      nuevos.motivo = "Elige por qué registras desde aquí.";
+    if (
+      pideMotivo &&
+      fd.get("motivo") === "Otro" &&
+      !String(fd.get("motivo_otro") ?? "").trim()
+    )
+      nuevos.motivo = "Cuéntanos el motivo.";
+    if (!String(fd.get("accion") ?? "").trim())
+      nuevos.accion = "Escribe la próxima acción.";
+    const f = String(fd.get("accion_fecha") ?? "");
+    if (!f) nuevos.fecha = "Elige la fecha de la próxima acción.";
+    else if (f < hoy) nuevos.fecha = "La fecha no puede ser en el pasado.";
+    const m = String(fd.get("monto") ?? "").replace(/[$,\s]/g, "");
+    if (m && (Number.isNaN(Number(m)) || Number(m) <= 0))
+      nuevos.monto = "Escribe un monto válido.";
+
+    setErrores(nuevos);
+    const primero = Object.keys(nuevos)[0];
+    if (primero) {
+      e.preventDefault();
+      document
+        .getElementById(`campo-${primero}`)
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }
+
+  // Enter en un campo de texto no envía el formulario (en el celular se presiona sin querer).
+  function evitarEnter(e: React.KeyboardEvent<HTMLFormElement>) {
+    if (e.key === "Enter" && (e.target as HTMLElement).tagName === "INPUT")
+      e.preventDefault();
+  }
+
   return (
-    <form action={accion} className="mt-6 space-y-6">
+    <form
+      action={accion}
+      onSubmit={validar}
+      onKeyDown={evitarEnter}
+      onChange={() => {
+        if (Object.keys(errores).length > 0) setErrores({});
+      }}
+      noValidate
+      className="mt-6 space-y-6"
+    >
       {/* ---------- Ubicación ---------- */}
       <section className="rounded-xl border border-stone-200 bg-white p-4">
         <h2 className="text-sm font-semibold text-stone-600">Ubicación</h2>
@@ -153,7 +201,7 @@ export function FormVisita(p: Props) {
         )}
 
         {pideMotivo && (
-          <fieldset className="mt-4">
+          <fieldset id="campo-motivo" className="mt-4">
             <legend className="text-sm font-medium">
               ¿Por qué registras desde aquí?
             </legend>
@@ -174,7 +222,6 @@ export function FormVisita(p: Props) {
                     className="sr-only"
                     checked={motivo === m}
                     onChange={() => setMotivo(m)}
-                    required
                   />
                   {m}
                 </label>
@@ -183,10 +230,17 @@ export function FormVisita(p: Props) {
             {motivo === "Otro" && (
               <input
                 name="motivo_otro"
-                required
                 placeholder="Cuéntanos el motivo"
                 className={estiloCampo}
               />
+            )}
+            {errores.motivo && (
+              <p
+                role="alert"
+                className="mt-1.5 text-sm font-medium text-red-700"
+              >
+                {errores.motivo}
+              </p>
             )}
             <p className="mt-2 text-xs text-stone-500">
               La visita se guarda igual; solo queda marcada para tu manager.
@@ -218,15 +272,20 @@ export function FormVisita(p: Props) {
 
       {/* ---------- Próxima acción ---------- */}
       <section>
-        <label className="block">
+        <label id="campo-accion" className="block">
           <span className="font-medium">Próxima acción</span>
           <input
             name="accion"
-            required
+            enterKeyHint="next"
             placeholder="Ej. Llevar degustación de la nueva lager"
             className={estiloCampo}
           />
         </label>
+        {errores.accion && (
+          <p role="alert" className="mt-1.5 text-sm font-medium text-red-700">
+            {errores.accion}
+          </p>
+        )}
         <div className="mt-3 flex flex-wrap gap-2">
           {atajosFecha.map((a) => {
             const valor = sumarDias(hoy, a.dias);
@@ -246,18 +305,22 @@ export function FormVisita(p: Props) {
             );
           })}
         </div>
-        <label className="mt-2 block">
+        <label id="campo-fecha" className="mt-2 block">
           <span className="text-sm text-stone-600">Fecha</span>
           <input
             type="date"
             name="accion_fecha"
-            required
             min={hoy}
             value={fecha}
             onChange={(e) => setFecha(e.target.value)}
             className={estiloCampo}
           />
         </label>
+        {errores.fecha && (
+          <p role="alert" className="mt-1.5 text-sm font-medium text-red-700">
+            {errores.fecha}
+          </p>
+        )}
       </section>
 
       {/* ---------- Opcionales ---------- */}
@@ -285,8 +348,10 @@ export function FormVisita(p: Props) {
                 $
               </span>
               <input
+                id="campo-monto"
                 name="monto"
                 inputMode="decimal"
+                enterKeyHint="done"
                 placeholder="0"
                 value={monto}
                 onChange={(e) => setMonto(e.target.value)}
@@ -294,6 +359,11 @@ export function FormVisita(p: Props) {
               />
             </div>
           </label>
+          {errores.monto && (
+            <p role="alert" className="mt-1.5 text-sm font-medium text-red-700">
+              {errores.monto}
+            </p>
+          )}
           {(p.objetivo !== null || p.pedidosMes > 0) && (
             <div className="mt-3">
               <AvancePedidos
