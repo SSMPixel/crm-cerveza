@@ -14,6 +14,7 @@ import {
   type Cuenta,
 } from "@/components/TarjetaCuenta";
 import { cerrarSesion } from "../login/acciones";
+import { elegirPlan, ordenarRuta } from "@/lib/ruta";
 
 export default function Inicio() {
   return (
@@ -59,13 +60,6 @@ async function Contenido() {
 // ---------------------------------------------------------------------
 // KAM: una meta alcanzable para hoy y un plan corto, no una lista de deudas.
 // ---------------------------------------------------------------------
-const prioridadEstado: Record<EstadoSeguimiento, number> = {
-  hoy: 0,
-  vencida: 1,
-  al_dia: 2,
-  cerrada: 3,
-};
-
 async function DiaDelKam({ perfil }: { perfil: Perfil }) {
   const supabase = await crearClienteServidor();
 
@@ -97,19 +91,8 @@ async function DiaDelKam({ perfil }: { perfil: Perfil }) {
   ).length;
   const pendientes = Math.max(meta - hechas, 0);
 
-  const plan = vigentes
-    .filter(
-      (c) =>
-        c.estado_seguimiento === "hoy" || c.estado_seguimiento === "vencida",
-    )
-    .sort(
-      (a, b) =>
-        prioridadEstado[a.estado_seguimiento] -
-          prioridadEstado[b.estado_seguimiento] ||
-        a.categoria.localeCompare(b.categoria) ||
-        a.toca_visita.localeCompare(b.toca_visita),
-    )
-    .slice(0, pendientes);
+  // Mismo cálculo que el mapa: urgentes agrupadas por cercanía, en orden de recorrido.
+  const plan = ordenarRuta(elegirPlan(vigentes, pendientes));
 
   return (
     <>
@@ -136,12 +119,20 @@ async function DiaDelKam({ perfil }: { perfil: Perfil }) {
       {plan.length > 0 && (
         <section className="mt-6">
           <h2 className="font-semibold">Tu plan de hoy</h2>
-          <p className="text-sm text-stone-600">Las más urgentes primero.</p>
+          <p className="text-sm text-stone-600">
+            Las más urgentes, agrupadas por cercanía y en orden de recorrido.
+          </p>
           <ol className="mt-3 space-y-2">
-            {plan.map((c) => (
-              <TarjetaCuenta key={c.id} cuenta={c} />
+            {plan.map((c, i) => (
+              <TarjetaCuenta key={c.id} cuenta={c} numero={i + 1} />
             ))}
           </ol>
+          <Link
+            href="/mapa"
+            className="mt-3 block rounded-lg border border-stone-300 bg-white px-4 py-3 text-center font-medium text-stone-800"
+          >
+            Ver ruta en el mapa
+          </Link>
         </section>
       )}
 

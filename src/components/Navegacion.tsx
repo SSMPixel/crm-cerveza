@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 
 const secciones = [
   { href: "/", texto: "Inicio" },
+  { href: "/mapa", texto: "Mapa" },
   { href: "/cuentas", texto: "Cuentas" },
 ];
 
@@ -12,7 +13,7 @@ const secciones = [
 export function Navegacion() {
   const ruta = usePathname();
   return (
-    <nav className="fixed inset-x-0 bottom-0 border-t border-stone-200 bg-white/95 backdrop-blur pb-[env(safe-area-inset-bottom)]">
+    <nav className="fixed inset-x-0 bottom-0 z-[1100] border-t border-stone-200 bg-white/95 backdrop-blur pb-[env(safe-area-inset-bottom)]">
       <ul className="mx-auto flex max-w-md">
         {secciones.map((s) => {
           const activa =

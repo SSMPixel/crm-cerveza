@@ -22,18 +22,22 @@ export type Cuenta = {
   accion_fecha: string | null;
   toca_visita: string;
   visitada_hoy: boolean;
+  lat: number | null;
+  lng: number | null;
   estado_seguimiento: EstadoSeguimiento;
 };
 
 export const camposCuenta =
-  "id, nombre, tipo_lugar, zona, categoria, etapa, kam_id, kam_nombre, dias_sin_visita, accion_descripcion, accion_fecha, toca_visita, visitada_hoy, estado_seguimiento";
+  "id, nombre, tipo_lugar, zona, categoria, etapa, kam_id, kam_nombre, dias_sin_visita, accion_descripcion, accion_fecha, toca_visita, visitada_hoy, estado_seguimiento, lat, lng";
 
 export function TarjetaCuenta({
   cuenta: c,
   mostrarKam = false,
+  numero,
 }: {
   cuenta: Cuenta;
   mostrarKam?: boolean;
+  numero?: number;
 }) {
   const accionVencida =
     c.accion_fecha !== null &&
@@ -47,7 +51,14 @@ export function TarjetaCuenta({
       >
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="truncate font-medium">{c.nombre}</p>
+            <p className="flex items-center gap-2 truncate font-medium">
+              {numero !== undefined && (
+                <span className="grid size-6 shrink-0 place-items-center rounded-full bg-amber-800 text-xs font-bold text-white">
+                  {numero}
+                </span>
+              )}
+              <span className="truncate">{c.nombre}</span>
+            </p>
             <p className="truncate text-sm text-stone-600">
               {[capitalizar(c.tipo_lugar), c.zona].filter(Boolean).join(" · ")}
               {mostrarKam && c.kam_nombre ? ` · ${c.kam_nombre}` : ""}
