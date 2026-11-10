@@ -18,6 +18,8 @@ import { elegirPlan, ordenarRuta } from "@/lib/ruta";
 import { redirect } from "next/navigation";
 import { empresaEnVista } from "@/lib/clienteActivo";
 import { AlertasDelCliente } from "@/components/auditor/AlertasDelCliente";
+import { respuestasRecientes, solicitudesPendientes } from "@/lib/solicitudes";
+import { TarjetaSolicitud } from "@/components/solicitudes/TarjetaSolicitud";
 
 export default function Inicio() {
   return (
@@ -77,20 +79,25 @@ async function Contenido() {
 async function DiaDelKam({ perfil }: { perfil: Perfil }) {
   const supabase = await crearClienteServidor();
 
-  const [{ data: metas }, { count: visitasHoy }, { data: cuentasData }] =
-    await Promise.all([
-      supabase
-        .from("perfiles")
-        .select("meta_visitas_dia, empresas(meta_visitas_dia)")
-        .eq("id", perfil.id)
-        .maybeSingle(),
-      supabase
-        .from("visitas")
-        .select("id", { count: "exact", head: true })
-        .eq("kam_id", perfil.id)
-        .gte("fecha_hora", inicioDeHoyMx()),
-      supabase.from("vista_cuentas").select(camposCuenta),
-    ]);
+  const [
+    { data: metas },
+    { count: visitasHoy },
+    { data: cuentasData },
+    respuestas,
+  ] = await Promise.all([
+    supabase
+      .from("perfiles")
+      .select("meta_visitas_dia, empresas(meta_visitas_dia)")
+      .eq("id", perfil.id)
+      .maybeSingle(),
+    supabase
+      .from("visitas")
+      .select("id", { count: "exact", head: true })
+      .eq("kam_id", perfil.id)
+      .gte("fecha_hora", inicioDeHoyMx()),
+    supabase.from("vista_cuentas").select(camposCuenta),
+    respuestasRecientes(supabase, perfil.id),
+  ]);
 
   // La meta del KAM si el manager la ajustó; si no, la de su empresa.
   const metaEmpresa = (
@@ -110,6 +117,15 @@ async function DiaDelKam({ perfil }: { perfil: Perfil }) {
 
   return (
     <>
+      {respuestas.length > 0 && (
+        <section className="mt-6 space-y-2">
+          <h2 className="font-semibold">Respuestas de tu manager</h2>
+          {respuestas.map((r) => (
+            <TarjetaSolicitud key={r.id} s={r} modo="propia" mostrarCuenta />
+          ))}
+        </section>
+      )}
+
       <section className="mt-6 rounded-xl border border-stone-200 bg-white p-4">
         <div className="flex items-baseline justify-between">
           <h2 className="font-semibold">Visitas de hoy</h2>
@@ -138,7 +154,12 @@ async function DiaDelKam({ perfil }: { perfil: Perfil }) {
           </p>
           <ol className="mt-3 space-y-2">
             {plan.map((c, i) => (
-              <TarjetaCuenta key={c.id} cuenta={c} numero={i + 1} />
+              <TarjetaCuenta
+                key={c.id}
+                cuenta={c}
+                numero={i + 1}
+                conRegistrar
+              />
             ))}
           </ol>
           <Link
@@ -260,8 +281,17 @@ async function ResumenEquipo({
     qVisitas = qVisitas.eq("empresa_id", empresaId);
     qKams = qKams.eq("empresa_id", empresaId);
   }
-  const [{ data: cuentasData }, { data: visitasData }, { data: kamsData }] =
-    await Promise.all([qCuentas, qVisitas, qKams]);
+  const [
+    { data: cuentasData },
+    { data: visitasData },
+    { data: kamsData },
+    solicitudes,
+  ] = await Promise.all([
+    qCuentas,
+    qVisitas,
+    qKams,
+    empresaId ? solicitudesPendientes(supabase, empresaId) : [],
+  ]);
 
   const cuentas = cuentasData ?? [];
   const visitas = (visitasData ?? []) as unknown as VisitaHoy[];
@@ -296,6 +326,22 @@ async function ResumenEquipo({
   return (
     <>
       {esAuditor && empresaId && <AlertasDelCliente empresaId={empresaId} />}
+
+      {solicitudes.length > 0 && (
+        <section className="mt-6 space-y-2">
+          <h2 className="font-semibold">
+            Solicitudes por revisar ({solicitudes.length})
+          </h2>
+          {solicitudes.map((sol) => (
+            <TarjetaSolicitud
+              key={sol.id}
+              s={sol}
+              modo="resolver"
+              mostrarCuenta
+            />
+          ))}
+        </section>
+      )}
 
       {/* ---------- Hoy en campo ---------- */}
       <section className="mt-6 rounded-xl border border-stone-200 bg-white p-4">

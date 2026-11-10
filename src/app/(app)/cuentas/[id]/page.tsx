@@ -19,6 +19,10 @@ import { ligaCorreo, ligaLlamada, ligaWhatsApp } from "@/lib/contacto";
 import { AvancePedidos } from "@/components/AvancePedidos";
 import { Miniaturas } from "@/components/Miniaturas";
 import { ligasFotos } from "@/lib/fotos";
+import { solicitudDeCuenta } from "@/lib/solicitudes";
+import { kamsDeEmpresa } from "@/lib/equipo";
+import { PedirCambio } from "@/components/solicitudes/PedirCambio";
+import { TarjetaSolicitud } from "@/components/solicitudes/TarjetaSolicitud";
 
 const nombreObjetivo: Record<string, string> = {
   grifo: "Grifo",
@@ -79,9 +83,13 @@ async function DetalleCuenta({
     ]);
 
   if (!c) notFound();
-  const fotosLigas = await ligasFotos(
-    (visitas ?? []).flatMap((v) => v.fotos ?? []),
-  );
+  const esDueno = perfil?.rol === "kam" && c.kam_id === perfil.id;
+  const [fotosLigas, solicitud, otrosKams] = await Promise.all([
+    ligasFotos((visitas ?? []).flatMap((v) => v.fotos ?? [])),
+    solicitudDeCuenta(supabase, id),
+    esDueno ? kamsDeEmpresa(c.empresa_id) : Promise.resolve([]),
+  ]);
+  const esJefe = perfil?.rol === "manager" || perfil?.rol === "auditor";
 
   const estado = estados[c.estado_seguimiento as EstadoSeguimiento];
   const puedeRegistrar =
@@ -301,6 +309,35 @@ async function DetalleCuenta({
           </ul>
         )}
       </section>
+
+      {/* ---------- Solicitudes al manager ---------- */}
+      {(solicitud || (esDueno && c.etapa !== "perdido")) && (
+        <section className="mt-8 space-y-3">
+          <h2 className="font-semibold">
+            {esDueno ? "¿Necesitas un cambio?" : "Solicitud del KAM"}
+          </h2>
+          {solicitud && (
+            <TarjetaSolicitud
+              s={solicitud}
+              modo={
+                esJefe
+                  ? "resolver"
+                  : solicitud.solicitante_id === perfil?.id
+                    ? "propia"
+                    : "ver"
+              }
+            />
+          )}
+          {esDueno &&
+            c.etapa !== "perdido" &&
+            solicitud?.estado !== "pendiente" && (
+              <PedirCambio
+                cuentaId={c.id}
+                kams={otrosKams.filter((k) => k.id !== perfil?.id)}
+              />
+            )}
+        </section>
+      )}
     </>
   );
 }

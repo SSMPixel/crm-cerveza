@@ -7,11 +7,14 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:db": "node supabase/tests/reglas.test.mjs supabase/migrations/0001_esquema_inicial.sql supabase/migrations/0002_vista_cuentas.sql supabase/migrations/0003_meta_diaria.sql supabase/migrations/0004_registrar_visita.sql supabase/migrations/0005_contacto_objetivos_hoy.sql supabase/migrations/0006_telefono_perfil.sql supabase/migrations/0007_resultado_y_fotos.sql supabase/migrations/0008_resumen_semanal.sql supabase/migrations/0009_altas_y_ediciones.sql "
+    "test:importar": "node --test tests/importar.test.ts",
+    "test:db": "node supabase/tests/reglas.test.mjs supabase/migrations/0001_esquema_inicial.sql supabase/migrations/0002_vista_cuentas.sql supabase/migrations/0003_meta_diaria.sql supabase/migrations/0004_registrar_visita.sql supabase/migrations/0005_contacto_objetivos_hoy.sql supabase/migrations/0006_telefono_perfil.sql supabase/migrations/0007_resultado_y_fotos.sql supabase/migrations/0008_resumen_semanal.sql supabase/migrations/0009_altas_y_ediciones.sql supabase/migrations/0010_solicitudes.sql"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.119.0",
+    "exceljs": "^4.4.0",
+    "jszip": "^3.10.2",
     "leaflet": "^1.9.4",
     "next": "16.4.6",
     "react": "19.3.0",

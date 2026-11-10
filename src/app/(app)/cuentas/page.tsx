@@ -122,9 +122,19 @@ async function ListaCuentas({
           </Link>
         </div>
       </div>
-      <p className="mt-1 text-sm text-stone-600">
-        {cuentas.length} cuentas · lo más urgente arriba
-      </p>
+      <div className="mt-1 flex items-baseline justify-between gap-3">
+        <p className="text-sm text-stone-600">
+          {cuentas.length} cuentas · lo más urgente arriba
+        </p>
+        {veEquipo && (
+          <Link
+            href="/cuentas/importar"
+            className="shrink-0 text-sm font-medium text-amber-800 underline-offset-4 hover:underline"
+          >
+            Importar desde Excel
+          </Link>
+        )}
+      </div>
 
       <BuscadorCuentas />
 

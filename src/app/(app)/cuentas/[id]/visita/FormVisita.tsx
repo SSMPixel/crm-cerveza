@@ -3,10 +3,11 @@
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { distanciaMetros, textoDistancia } from "@/lib/geo";
-import { nombreEtapa, resultadosVisita } from "@/lib/formato";
+import { formatearMonto, nombreEtapa, resultadosVisita } from "@/lib/formato";
 import { registrarVisita, type EstadoVisita } from "./acciones";
 import { AvancePedidos } from "@/components/AvancePedidos";
 import { FotosVisita } from "@/components/FotosVisita";
+import { AvisoSalir } from "@/components/AvisoSalir";
 
 type Props = {
   cuentaId: string;
@@ -78,6 +79,8 @@ export function FormVisita(p: Props) {
   const [motivo, setMotivo] = useState("");
   const [fecha, setFecha] = useState("");
   const [monto, setMonto] = useState("");
+  // ¿Ya capturó algo? Para avisar antes de salir sin guardar.
+  const [sucio, setSucio] = useState(false);
   const montoNumero = Number(monto.replace(/[$,\s]/g, "")) || 0;
   const [errores, setErrores] = useState<Record<string, string>>({});
   const hoy = p.hoy;
@@ -166,8 +169,10 @@ export function FormVisita(p: Props) {
     iniciar(async () => {
       try {
         const r = await registrarVisita(p.cuentaId, fd);
-        if (r.ok) router.push(`/cuentas/${p.cuentaId}?registrada=1`);
-        else setEstado(r);
+        if (r.ok) {
+          setSucio(false);
+          router.push(`/cuentas/${p.cuentaId}?registrada=1`);
+        } else setEstado(r);
       } catch {
         setEstado({
           error:
@@ -188,7 +193,13 @@ export function FormVisita(p: Props) {
       onSubmit={enviar}
       onKeyDown={evitarEnter}
       onChange={() => {
+        setSucio(true);
         if (Object.keys(errores).length > 0) setErrores({});
+      }}
+      onClickCapture={(e) => {
+        // Los botones de opción (resultado, motivo, fechas) también cuentan.
+        if ((e.target as HTMLElement).closest('button[type="button"]'))
+          setSucio(true);
       }}
       noValidate
       className="mt-6 space-y-6"
@@ -415,7 +426,7 @@ export function FormVisita(p: Props) {
                 enterKeyHint="done"
                 placeholder="0"
                 value={monto}
-                onChange={(e) => setMonto(e.target.value)}
+                onChange={(e) => setMonto(formatearMonto(e.target.value))}
                 className={`${estiloCampo} pl-7`}
               />
             </div>
@@ -481,6 +492,10 @@ export function FormVisita(p: Props) {
               ? "Esperando ubicación…"
               : "Guardar visita"}
       </button>
+      <AvisoSalir
+        activo={sucio && !enviando}
+        mensaje="Perderás lo que capturaste de esta visita."
+      />
     </form>
   );
 }

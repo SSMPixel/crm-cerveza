@@ -34,11 +34,15 @@ export function TarjetaCuenta({
   cuenta: c,
   mostrarKam = false,
   numero,
+  conRegistrar = false,
 }: {
   cuenta: Cuenta;
   mostrarKam?: boolean;
   numero?: number;
+  /** Atajo para registrar la visita sin pasar por el detalle (plan del día). */
+  conRegistrar?: boolean;
 }) {
+  const atajo = conRegistrar && !c.visitada_hoy;
   const accionVencida =
     c.accion_fecha !== null &&
     textoFechaAccion(c.accion_fecha).startsWith("venció");
@@ -47,7 +51,9 @@ export function TarjetaCuenta({
     <li>
       <Link
         href={`/cuentas/${c.id}`}
-        className="block h-full rounded-xl border border-stone-200 bg-white p-3 transition-colors hover:border-amber-700/40 active:bg-stone-50"
+        className={`block rounded-xl border border-stone-200 bg-white p-3 transition-colors hover:border-amber-700/40 active:bg-stone-50 ${
+          atajo ? "rounded-b-none border-b-0" : "h-full"
+        }`}
       >
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -97,6 +103,28 @@ export function TarjetaCuenta({
           </p>
         )}
       </Link>
+      {atajo && (
+        <Link
+          href={`/cuentas/${c.id}/visita`}
+          className="flex items-center justify-center gap-1.5 rounded-b-xl border border-stone-200 bg-stone-50 px-3 py-2 text-sm font-medium text-amber-800 hover:bg-stone-100"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            className="size-4"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            aria-hidden
+          >
+            <path
+              d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21Z"
+              strokeLinejoin="round"
+            />
+            <circle cx="12" cy="9.5" r="2.5" />
+          </svg>
+          Registrar visita
+        </Link>
+      )}
     </li>
   );
 }

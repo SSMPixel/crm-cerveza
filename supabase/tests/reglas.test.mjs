@@ -233,5 +233,47 @@ if (archivos.some(f => f.includes('0009'))) {
   check('KAM no ajusta la configuración de la empresa', !r.rows?.length);
 }
 
+// ---------- Importar cartera (alta masiva del manager) ----------
+if (archivos.some(f => f.includes('0009'))) {
+  r = await as(U.man, `insert into cuentas (empresa_id, kam_id, nombre, direccion, zona, tipo_lugar, categoria, etapa, contacto_nombre, contacto_telefono, contacto_correo, objetivo_mensual_mxn, lat, lng) values
+    ('${E1}', '${U.k1}', 'Importada 1', 'Durango 200, CP 06700', 'Roma', 'bar', 'A', 'activo', 'Juan', '5512345678', 'j@x.mx', 15000, 19.41, -99.16),
+    ('${E1}', null, 'Importada 2', null, null, null, 'C', 'perdido', null, null, null, null, null, null) returning etapa`);
+  check('Manager importa varias cuentas de un jalón', r.rows?.length === 2 && r.rows[1].etapa === 'perdido');
+  r = await as(U.man, `insert into cuentas (empresa_id, nombre) values ('${E1}', 'Buena'), ('${E2}', 'De otra empresa') returning id`);
+  check('Importación con una fila ajena no deja nada a medias', !!r.error);
+  r = await as(U.man, `select count(*)::int n from cuentas where nombre = 'Buena'`);
+  check('…y no se guardó ninguna', r.rows?.[0]?.n === 0);
+}
+
+// ---------- Solicitudes (0010) ----------
+if (archivos.some(f => f.includes('0010'))) {
+  await db.exec(`reset role; delete from solicitudes; update cuentas set etapa = 'activo', kam_id = '${U.k2}' where id = '${cuenta2}';`);
+  r = await as(U.k1, `insert into solicitudes (empresa_id, cuenta_id, tipo, solicitante_id, motivo) values ('${E1}', '${cuenta2}', 'perdida', '${U.k1}', 'x') returning id`);
+  check('KAM no pide cambios de cuentas ajenas', !!r.error);
+  r = await as(U.k2, `insert into solicitudes (empresa_id, cuenta_id, tipo, solicitante_id, kam_destino_id) values ('${E1}', '${cuenta2}', 'reasignar', '${U.k2}', '${U.k2}') returning id`);
+  check('No se pide pasar la cuenta a quien ya la tiene', !!r.error);
+  r = await as(U.k2, `insert into solicitudes (empresa_id, cuenta_id, tipo, solicitante_id, kam_destino_id) values ('${E1}', '${cuenta2}', 'reasignar', '${U.k2}', '${U.man}') returning id`);
+  check('Solo se pasa a un KAM', !!r.error);
+  r = await as(U.k2, `insert into solicitudes (empresa_id, cuenta_id, tipo, solicitante_id, kam_destino_id, motivo) values ('${E1}', '${cuenta2}', 'reasignar', '${U.k2}', '${U.k1}', 'Me queda lejos') returning id`);
+  check('KAM pide pasar su cuenta a otro KAM', r.rows?.length === 1);
+  const s1 = r.rows?.[0]?.id;
+  r = await as(U.k2, `insert into solicitudes (empresa_id, cuenta_id, tipo, solicitante_id, motivo) values ('${E1}', '${cuenta2}', 'perdida', '${U.k2}', 'Cerró') returning id`);
+  check('Solo una solicitud pendiente por cuenta', !!r.error);
+  r = await as(U.k2, `delete from solicitudes where id = '${s1}' returning id`);
+  check('KAM cancela su solicitud pendiente', r.rows?.length === 1);
+  r = await as(U.k2, `insert into solicitudes (empresa_id, cuenta_id, tipo, solicitante_id, kam_destino_id, motivo) values ('${E1}', '${cuenta2}', 'reasignar', '${U.k2}', '${U.k1}', 'Me queda lejos') returning id`);
+  const s2 = r.rows?.[0]?.id;
+  r = await as(U.man, `update solicitudes set estado = 'aprobada', respuesta = 'Va' where id = '${s2}' returning id`);
+  r = await as(U.man, `select kam_id from cuentas where id = '${cuenta2}'`);
+  check('Al aprobar, la cuenta pasa al otro KAM', r.rows?.[0]?.kam_id === U.k1);
+  r = await as(U.k2, `delete from solicitudes where id = '${s2}' returning id`);
+  check('Una solicitud resuelta ya no se borra', !r.rows?.length);
+  r = await as(U.k1, `insert into solicitudes (empresa_id, cuenta_id, tipo, solicitante_id, motivo) values ('${E1}', '${cuenta2}', 'perdida', '${U.k1}', 'Cerró el lugar') returning id`);
+  const s3 = r.rows?.[0]?.id;
+  r = await as(U.man, `update solicitudes set estado = 'rechazada', respuesta = 'Sigue abierto' where id = '${s3}' returning resuelta_por`);
+  r = await as(U.man, `select etapa from cuentas where id = '${cuenta2}'`);
+  check('Al rechazar, la cuenta sigue igual', r.rows?.[0]?.etapa === 'activo');
+}
+
 console.log(`\n${ok} correctas, ${fail} fallas`);
 process.exit(fail ? 1 : 0);

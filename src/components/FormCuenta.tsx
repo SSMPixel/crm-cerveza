@@ -2,7 +2,12 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { capitalizar, nombreEtapa, tiposLugar } from "@/lib/formato";
+import {
+  capitalizar,
+  formatearMonto,
+  nombreEtapa,
+  tiposLugar,
+} from "@/lib/formato";
 import { guardarCuenta } from "@/app/(app)/cuentas/acciones";
 
 export type DatosCuenta = {
@@ -181,7 +186,12 @@ export function FormCuenta({
               <input
                 name="objetivo"
                 inputMode="decimal"
-                defaultValue={cuenta?.objetivo_mensual_mxn ?? ""}
+                defaultValue={formatearMonto(
+                  String(cuenta?.objetivo_mensual_mxn ?? ""),
+                )}
+                onChange={(e) => {
+                  e.target.value = formatearMonto(e.target.value);
+                }}
                 placeholder="$"
                 className={estilo}
               />

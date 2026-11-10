@@ -129,3 +129,13 @@ export const tiposLugar = [
   "distribuidor",
   "otro",
 ] as const;
+
+// "12500.5" → "12,500.5" mientras se escribe un monto (máximo 2 decimales).
+export function formatearMonto(texto: string): string {
+  const limpio = texto.replace(/[^\d.]/g, "");
+  const [entero, ...resto] = limpio.split(".");
+  const conComas = entero
+    .replace(/^0+(?=\d)/, "")
+    .replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return resto.length ? `${conComas}.${resto.join("").slice(0, 2)}` : conComas;
+}
