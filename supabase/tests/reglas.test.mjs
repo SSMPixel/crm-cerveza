@@ -275,5 +275,35 @@ if (archivos.some(f => f.includes('0010'))) {
   check('Al rechazar, la cuenta sigue igual', r.rows?.[0]?.etapa === 'activo');
 }
 
+// ---------- Conversación y plan del día (0011) ----------
+if (archivos.some(f => f.includes('0011'))) {
+  await db.exec(`reset role; delete from comentarios; update cuentas set kam_id = '${U.k1}' where id = '${cuenta1}';`);
+  await as(U.man, `insert into comentarios (empresa_id, cuenta_id, autor_id, texto) values ('${E1}', '${cuenta1}', '${U.man}', 'Pregunta por el grifo')`);
+  await as(U.man, `insert into comentarios (empresa_id, cuenta_id, autor_id, texto, visibilidad) values ('${E1}', '${cuenta1}', '${U.man}', 'Nota interna', 'privada_manager')`);
+  r = await as(U.k1, `select * from comentarios_sin_leer()`);
+  check('KAM ve 1 mensaje nuevo (no la nota interna)', r.rows?.length === 1 && r.rows[0].nuevos === 1 && r.rows[0].ultimo_texto === 'Pregunta por el grifo');
+  r = await as(U.k1, `select marcar_comentarios_vistos('${cuenta1}')`);
+  r = await as(U.k1, `select * from comentarios_sin_leer()`);
+  check('Al abrir la cuenta, ya no hay mensajes nuevos', r.rows?.length === 0);
+  await as(U.k1, `insert into comentarios (empresa_id, cuenta_id, autor_id, texto) values ('${E1}', '${cuenta1}', '${U.k1}', 'Ya le pregunté')`);
+  r = await as(U.man, `select * from comentarios_sin_leer('${E1}')`);
+  check('Manager ve la respuesta del KAM como nueva', r.rows?.[0]?.ultimo_autor && r.rows[0].nuevos === 1);
+  r = await as(U.k2, `select * from comentarios_sin_leer()`);
+  check('Otro KAM no ve mensajes de cuentas ajenas', r.rows?.length === 0);
+  r = await as(U.k1, `insert into comentarios (empresa_id, cuenta_id, autor_id, texto, visibilidad) values ('${E1}', '${cuenta1}', '${U.k1}', 'x', 'privada_manager') returning id`);
+  check('KAM no escribe notas internas', !!r.error);
+
+  r = await as(U.k1, `select fijar_plan_dia(array['${cuenta1}']::uuid[]) as p`);
+  check('KAM fija su plan del día', r.rows?.[0]?.p?.length === 1);
+  r = await as(U.k1, `select fijar_plan_dia(array['${cuenta2}', '${cuenta1}']::uuid[]) as p`);
+  check('El plan del día no cambia después', r.rows?.[0]?.p?.length === 1);
+  r = await as(U.man, `select count(*)::int n from planes_dia`);
+  check('Manager ve los planes de su equipo', r.rows?.[0]?.n === 1);
+  r = await as(U.k2, `select count(*)::int n from planes_dia`);
+  check('Otro KAM no ve planes ajenos', r.rows?.[0]?.n === 0);
+  r = await as(U.man, `select fijar_plan_dia(array['${cuenta1}']::uuid[]) as p`);
+  check('El manager no fija planes', !!r.error || r.rows?.[0]?.p === null);
+}
+
 console.log(`\n${ok} correctas, ${fail} fallas`);
 process.exit(fail ? 1 : 0);

@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "test:importar": "node --test tests/importar.test.ts",
-    "test:db": "node supabase/tests/reglas.test.mjs supabase/migrations/0001_esquema_inicial.sql supabase/migrations/0002_vista_cuentas.sql supabase/migrations/0003_meta_diaria.sql supabase/migrations/0004_registrar_visita.sql supabase/migrations/0005_contacto_objetivos_hoy.sql supabase/migrations/0006_telefono_perfil.sql supabase/migrations/0007_resultado_y_fotos.sql supabase/migrations/0008_resumen_semanal.sql supabase/migrations/0009_altas_y_ediciones.sql supabase/migrations/0010_solicitudes.sql"
+    "test:db": "node supabase/tests/reglas.test.mjs supabase/migrations/0001_esquema_inicial.sql supabase/migrations/0002_vista_cuentas.sql supabase/migrations/0003_meta_diaria.sql supabase/migrations/0004_registrar_visita.sql supabase/migrations/0005_contacto_objetivos_hoy.sql supabase/migrations/0006_telefono_perfil.sql supabase/migrations/0007_resultado_y_fotos.sql supabase/migrations/0008_resumen_semanal.sql supabase/migrations/0009_altas_y_ediciones.sql supabase/migrations/0010_solicitudes.sql supabase/migrations/0011_conversacion_y_plan.sql"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

@@ -4,7 +4,7 @@ import { inicioDeHoyMx } from "@/lib/formato";
 import { obtenerPerfil } from "@/lib/sesion";
 import { empresaEnVista } from "@/lib/clienteActivo";
 import { redirect } from "next/navigation";
-import { elegirPlan, ordenarRuta } from "@/lib/ruta";
+import { planDelDia } from "@/lib/planDelDia";
 import { camposCuenta, type Cuenta } from "@/components/TarjetaCuenta";
 import { VistaMapa } from "@/components/mapa/VistaMapa";
 
@@ -51,8 +51,9 @@ async function Contenido() {
       metas?.empresas as unknown as { meta_visitas_dia: number } | null
     )?.meta_visitas_dia;
     const meta = metas?.meta_visitas_dia ?? metaEmpresa ?? 5;
-    const vigentes = cuentas.filter((c) => c.estado_seguimiento !== "cerrada");
-    plan = ordenarRuta(elegirPlan(vigentes, Math.max(meta - (count ?? 0), 0)));
+    // El mismo plan fijo de Inicio; en el mapa solo lo que falta por visitar.
+    const fijo = await planDelDia(supabase, cuentas, meta, count ?? 0);
+    plan = [...fijo.plan.filter((c) => !c.visitada_hoy), ...fijo.extra];
   }
 
   return (

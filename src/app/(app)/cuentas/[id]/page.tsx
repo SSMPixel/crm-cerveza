@@ -23,6 +23,8 @@ import { solicitudDeCuenta } from "@/lib/solicitudes";
 import { kamsDeEmpresa } from "@/lib/equipo";
 import { PedirCambio } from "@/components/solicitudes/PedirCambio";
 import { TarjetaSolicitud } from "@/components/solicitudes/TarjetaSolicitud";
+import { comentariosDeCuenta } from "@/lib/conversacion";
+import { Conversacion } from "@/components/conversacion/Conversacion";
 
 const nombreObjetivo: Record<string, string> = {
   grifo: "Grifo",
@@ -84,10 +86,11 @@ async function DetalleCuenta({
 
   if (!c) notFound();
   const esDueno = perfil?.rol === "kam" && c.kam_id === perfil.id;
-  const [fotosLigas, solicitud, otrosKams] = await Promise.all([
+  const [fotosLigas, solicitud, otrosKams, comentarios] = await Promise.all([
     ligasFotos((visitas ?? []).flatMap((v) => v.fotos ?? [])),
     solicitudDeCuenta(supabase, id),
     esDueno ? kamsDeEmpresa(c.empresa_id) : Promise.resolve([]),
+    comentariosDeCuenta(supabase, id),
   ]);
   const esJefe = perfil?.rol === "manager" || perfil?.rol === "auditor";
 
@@ -259,6 +262,25 @@ async function DetalleCuenta({
           </ul>
         </section>
       )}
+
+      <section id="conversacion" className="mt-6 scroll-mt-4">
+        <h2 className="mb-2 font-semibold">
+          Conversación
+          {comentarios.length > 0 && (
+            <span className="font-normal text-stone-500">
+              {" "}
+              · {comentarios.length}
+            </span>
+          )}
+        </h2>
+        <Conversacion
+          cuentaId={c.id}
+          comentarios={comentarios}
+          yo={perfil?.id ?? ""}
+          puedeNotaInterna={esJefe}
+          puedeEscribir={esDueno || esJefe}
+        />
+      </section>
 
       <section className="mt-6">
         <h2 className="font-semibold">Últimas visitas</h2>

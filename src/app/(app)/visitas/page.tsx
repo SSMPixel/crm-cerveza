@@ -9,6 +9,8 @@ import { textoDistancia } from "@/lib/geo";
 import { ligasFotos } from "@/lib/fotos";
 import { Miniaturas } from "@/components/Miniaturas";
 import { BotonDescargar } from "@/components/BotonDescargar";
+import { PlanRealidad } from "@/components/PlanRealidad";
+import { planContraRealidad } from "@/lib/planRealidad";
 
 export const metadata = { title: "Historial" };
 
@@ -123,9 +125,21 @@ async function Historial({
     .order("nombre");
   if (empresaId) qKams = qKams.eq("empresa_id", empresaId);
 
-  const [{ data, error }, { data: kamsData }] = await Promise.all([
+  const hoy = hoyMx();
+  const desdeDia = new Date(
+    Date.parse(`${hoy}T12:00:00Z`) - (Number(dias) - 1) * 86_400_000,
+  )
+    .toISOString()
+    .slice(0, 10);
+  const [{ data, error }, { data: kamsData }, planes] = await Promise.all([
     q,
     veEquipo ? qKams : Promise.resolve({ data: [] }),
+    planContraRealidad(supabase, {
+      empresaId: veEquipo && kam ? null : empresaId,
+      kamId: veEquipo ? kam : perfil.id,
+      desde: desdeDia,
+      hasta: hoy,
+    }),
   ]);
   if (error)
     return (
@@ -215,6 +229,12 @@ async function Historial({
           />
         </div>
       </div>
+
+      <PlanRealidad
+        dias={planes}
+        kams={veEquipo && !kam ? kams : undefined}
+        liga={(id) => liga({ kam: id })}
+      />
 
       {visitas.length === 0 && (
         <p className="mt-8 text-stone-600">No hay visitas con estos filtros.</p>

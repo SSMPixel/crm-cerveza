@@ -70,6 +70,7 @@ export function htmlResumen(d: DatosResumen, urlApp: string) {
       return `<tr>
         <td style="padding:10px 8px;border-top:1px solid ${C.borde};font-weight:600">${e(k.nombre)}</td>
         <td style="padding:10px 8px;border-top:1px solid ${C.borde};text-align:right">${k.visitas}/${k.meta}</td>
+        <td style="padding:10px 8px;border-top:1px solid ${C.borde};text-align:right;color:${k.plan !== null && k.plan < 60 ? "#c2410c" : C.tinta}">${k.plan === null ? "—" : `${k.plan}%`}</td>
         <td style="padding:10px 8px;border-top:1px solid ${C.borde};text-align:right;color:${k.fueraDeRango ? "#c2410c" : C.tinta}">${k.fueraDeRango}</td>
         <td style="padding:10px 8px;border-top:1px solid ${C.borde};text-align:right">${k.avances}</td>
         <td style="padding:10px 8px;border-top:1px solid ${C.borde};text-align:right">${k.pedidos ? mxn.format(k.pedidos) : "—"}</td>
@@ -134,7 +135,7 @@ export function htmlResumen(d: DatosResumen, urlApp: string) {
   <h2 style="margin:0 0 8px;font-size:16px">Por KAM</h2>
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="font-size:14px">
     <tr style="color:${C.suave};font-size:12px">
-      <td style="padding:0 8px 6px">KAM</td><td style="padding:0 8px 6px;text-align:right">Visitas/meta</td>
+      <td style="padding:0 8px 6px">KAM</td><td style="padding:0 8px 6px;text-align:right">Visitas/meta</td><td style="padding:0 8px 6px;text-align:right">Plan</td>
       <td style="padding:0 8px 6px;text-align:right">Fuera</td><td style="padding:0 8px 6px;text-align:right">Avances</td>
       <td style="padding:0 8px 6px;text-align:right">Pedidos</td><td style="padding:0 8px 6px;text-align:right"></td>
     </tr>

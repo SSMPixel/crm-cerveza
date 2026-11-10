@@ -3,6 +3,7 @@
 // Recibe el cliente de Supabase para servir igual en la vista previa (con la
 // sesión del usuario) que en el envío automático (con la llave secreta).
 // =====================================================================
+import { cumplimiento, planContraRealidad } from "@/lib/planRealidad";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { cargarClientes } from "@/lib/datosClientes";
 import type { Alerta } from "@/lib/alertas";
@@ -21,6 +22,8 @@ export type FilaKam = {
   alDia: number;
   cartera: number;
   semaforo: Semaforo;
+  /** % del plan diario que sí visitó (null si no hubo plan guardado). */
+  plan: number | null;
 };
 
 export type CuentaUrgente = {
@@ -121,6 +124,12 @@ export async function datosResumen(
     if (kam) avancesPorKam.set(kam, (avancesPorKam.get(kam) ?? 0) + 1);
   }
 
+  const planes = await planContraRealidad(supabase, {
+    empresaId,
+    desde,
+    hasta,
+  });
+
   const kams: FilaKam[] = (gente.data ?? [])
     .filter((p) => p.rol === "kam")
     .map((k) => {
@@ -144,6 +153,8 @@ export async function datosResumen(
         alDia: cartera.filter((c) => c.estado_seguimiento === "al_dia").length,
         cartera: cartera.length,
         semaforo: semaforo(susVisitas.length, meta, fuera),
+        plan:
+          cumplimiento(planes.filter((d) => d.kam_id === k.id))?.pct ?? null,
       };
     })
     .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));

@@ -4,6 +4,7 @@ import { crearClienteServidor } from "@/lib/supabase/server";
 import { obtenerPerfil, type Perfil } from "@/lib/sesion";
 import {
   estados,
+  hoyMx,
   inicioDeHoyMx,
   nombreRol,
   type EstadoSeguimiento,
@@ -14,12 +15,15 @@ import {
   type Cuenta,
 } from "@/components/TarjetaCuenta";
 import { cerrarSesion } from "../login/acciones";
-import { elegirPlan, ordenarRuta } from "@/lib/ruta";
+import { planDelDia } from "@/lib/planDelDia";
+import { planContraRealidad } from "@/lib/planRealidad";
 import { redirect } from "next/navigation";
 import { empresaEnVista } from "@/lib/clienteActivo";
 import { AlertasDelCliente } from "@/components/auditor/AlertasDelCliente";
 import { respuestasRecientes, solicitudesPendientes } from "@/lib/solicitudes";
 import { TarjetaSolicitud } from "@/components/solicitudes/TarjetaSolicitud";
+import { mensajesNuevos } from "@/lib/conversacion";
+import { MensajesNuevos } from "@/components/conversacion/MensajesNuevos";
 
 export default function Inicio() {
   return (
@@ -84,6 +88,7 @@ async function DiaDelKam({ perfil }: { perfil: Perfil }) {
     { count: visitasHoy },
     { data: cuentasData },
     respuestas,
+    mensajes,
   ] = await Promise.all([
     supabase
       .from("perfiles")
@@ -97,6 +102,7 @@ async function DiaDelKam({ perfil }: { perfil: Perfil }) {
       .gte("fecha_hora", inicioDeHoyMx()),
     supabase.from("vista_cuentas").select(camposCuenta),
     respuestasRecientes(supabase, perfil.id),
+    mensajesNuevos(supabase, null),
   ]);
 
   // La meta del KAM si el manager la ajustó; si no, la de su empresa.
@@ -112,8 +118,9 @@ async function DiaDelKam({ perfil }: { perfil: Perfil }) {
   ).length;
   const pendientes = Math.max(meta - hechas, 0);
 
-  // Mismo cálculo que el mapa: urgentes agrupadas por cercanía, en orden de recorrido.
-  const plan = ordenarRuta(elegirPlan(vigentes, pendientes));
+  // Urgentes agrupadas por cercanía, en orden de recorrido; fijo para todo el día.
+  const { plan, extra } = await planDelDia(supabase, cuentas, meta, hechas);
+  const hechasDelPlan = plan.filter((c) => c.visitada_hoy).length;
 
   return (
     <>
@@ -125,6 +132,8 @@ async function DiaDelKam({ perfil }: { perfil: Perfil }) {
           ))}
         </section>
       )}
+
+      <MensajesNuevos lista={mensajes} />
 
       <section className="mt-6 rounded-xl border border-stone-200 bg-white p-4">
         <div className="flex items-baseline justify-between">
@@ -148,7 +157,12 @@ async function DiaDelKam({ perfil }: { perfil: Perfil }) {
 
       {plan.length > 0 && (
         <section className="mt-6">
-          <h2 className="font-semibold">Tu plan de hoy</h2>
+          <div className="flex items-baseline justify-between gap-2">
+            <h2 className="font-semibold">Tu plan de hoy</h2>
+            <span className="text-sm tabular-nums text-stone-600">
+              {hechasDelPlan} de {plan.length} hechas
+            </span>
+          </div>
           <p className="text-sm text-stone-600">
             Las más urgentes, agrupadas por cercanía y en orden de recorrido.
           </p>
@@ -162,6 +176,18 @@ async function DiaDelKam({ perfil }: { perfil: Perfil }) {
               />
             ))}
           </ol>
+          {extra.length > 0 && (
+            <>
+              <p className="mt-4 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-800">
+                ¡Plan cumplido! Si te da tiempo para llegar a tu meta:
+              </p>
+              <ol className="mt-2 space-y-2">
+                {extra.map((c) => (
+                  <TarjetaCuenta key={c.id} cuenta={c} conRegistrar />
+                ))}
+              </ol>
+            </>
+          )}
           <Link
             href="/mapa"
             className="mt-3 block rounded-lg border border-stone-300 bg-white px-4 py-3 text-center font-medium text-stone-800"
@@ -286,11 +312,15 @@ async function ResumenEquipo({
     { data: visitasData },
     { data: kamsData },
     solicitudes,
+    mensajes,
+    planesHoy,
   ] = await Promise.all([
     qCuentas,
     qVisitas,
     qKams,
     empresaId ? solicitudesPendientes(supabase, empresaId) : [],
+    mensajesNuevos(supabase, empresaId),
+    planContraRealidad(supabase, { empresaId, desde: hoyMx(), hasta: hoyMx() }),
   ]);
 
   const cuentas = cuentasData ?? [];
@@ -313,6 +343,7 @@ async function ResumenEquipo({
       atrasadas: deCartera.filter((c) => c.estado_seguimiento === "vencida")
         .length,
       alDia: deCartera.filter((c) => c.estado_seguimiento === "al_dia").length,
+      plan: planesHoy.find((d) => d.kam_id === k.id) ?? null,
     };
   });
 
@@ -326,6 +357,8 @@ async function ResumenEquipo({
   return (
     <>
       {esAuditor && empresaId && <AlertasDelCliente empresaId={empresaId} />}
+
+      <MensajesNuevos lista={mensajes} />
 
       {solicitudes.length > 0 && (
         <section className="mt-6 space-y-2">
@@ -393,6 +426,14 @@ async function ResumenEquipo({
                 )}
               </p>
               <p className="text-xs text-stone-500">
+                {k.plan && (
+                  <>
+                    Plan: {k.plan.cumplidas} de {k.plan.planeadas}
+                    {k.plan.fueraDePlan > 0 &&
+                      ` (+${k.plan.fueraDePlan} fuera de plan)`}
+                    {" · "}
+                  </>
+                )}
                 Cartera: {k.alDia} al día · {k.atrasadas} atrasadas
               </p>
             </li>
