@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRef, useState, useTransition } from "react";
 import { nombreEtapa } from "@/lib/formato";
+import { BotonDescargar } from "@/components/BotonDescargar";
 import type {
   Campo,
   FilaAnalizada,
@@ -157,26 +158,11 @@ export function FormImportar({
           Usa nuestra plantilla, o sube el Excel que ya tengas: reconocemos
           columnas como Cliente, Dirección, Colonia, Vendedor, Teléfono.
         </p>
-        <a
+        <BotonDescargar
           href="/exportar/plantilla"
-          className="mt-3 inline-flex items-center gap-2 rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm font-medium"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            className="size-4"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            aria-hidden
-          >
-            <path
-              d="M12 3v12m0 0-4-4m4 4 4-4M5 21h14"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-          Descargar plantilla
-        </a>
+          texto="Descargar plantilla"
+          className="mt-3 py-2"
+        />
       </section>
 
       {/* ---------- Paso 2 ---------- */}
