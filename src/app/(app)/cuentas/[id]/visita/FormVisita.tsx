@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useState } from "react";
 import { distanciaMetros, textoDistancia } from "@/lib/geo";
-import { nombreEtapa, hoyMx } from "@/lib/formato";
+import { nombreEtapa } from "@/lib/formato";
 import { registrarVisita, type EstadoVisita } from "./acciones";
 import { AvancePedidos } from "@/components/AvancePedidos";
 
@@ -15,6 +15,7 @@ type Props = {
   accionPendiente: string | null;
   pedidosMes: number;
   objetivo: number | null;
+  hoy: string; // "AAAA-MM-DD" en CDMX, calculado en el servidor
 };
 
 type Ubicacion =
@@ -65,11 +66,11 @@ export function FormVisita(p: Props) {
   const [fecha, setFecha] = useState("");
   const [monto, setMonto] = useState("");
   const montoNumero = Number(monto.replace(/[$,\s]/g, "")) || 0;
-  const hoy = hoyMx();
+  const hoy = p.hoy;
 
   // Algunos navegadores viejos no dan ubicación: se detecta sin esperar.
   const sinSoporte =
-    typeof navigator !== "undefined" && !("geolocation" in navigator);
+    typeof window !== "undefined" && !("geolocation" in navigator);
 
   useEffect(() => {
     if (sinSoporte) return;

@@ -28,7 +28,7 @@ export type PuntoMapa = {
 
 const colorEstado: Record<EstadoSeguimiento, string> = {
   vencida: "#f97316", // naranja
-  hoy: "#f59e0b", // ámbar
+  hoy: "#16a34a", // verde
   al_dia: "#a8a29e", // gris
   cerrada: "#d6d3d1",
 };
@@ -36,7 +36,7 @@ const colorEstado: Record<EstadoSeguimiento, string> = {
 function iconoNumero(n: number) {
   return L.divIcon({
     className: "",
-    html: `<div style="width:30px;height:30px;border-radius:9999px;background:#92400e;color:#fff;display:grid;place-items:center;font:700 14px system-ui;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35)">${n}</div>`,
+    html: `<div style="width:30px;height:30px;border-radius:9999px;background:#15803d;color:#fff;display:grid;place-items:center;font:700 14px system-ui;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35)">${n}</div>`,
     iconSize: [30, 30],
     iconAnchor: [15, 15],
   });
@@ -94,8 +94,9 @@ export default function MapaLeaflet({
       attributionControl
     >
       <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
-        url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+        maxZoom={19}
       />
       <Encuadre puntos={encuadre} />
 
@@ -126,7 +127,7 @@ export default function MapaLeaflet({
       {linea.length > 1 && (
         <Polyline
           positions={linea}
-          pathOptions={{ color: "#92400e", weight: 3, dashArray: "6 8" }}
+          pathOptions={{ color: "#15803d", weight: 3, dashArray: "6 8" }}
         />
       )}
 

@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { crearClienteServidor } from "@/lib/supabase/server";
 import { obtenerPerfil } from "@/lib/sesion";
 import { FormVisita } from "./FormVisita";
+import { hoyMx } from "@/lib/formato";
 
 export default function PaginaVisita(props: PageProps<"/cuentas/[id]/visita">) {
   return (
@@ -68,6 +69,7 @@ async function Contenido({
         radio={empresa?.radio_checkin_m ?? 300}
         etapaActual={c.etapa}
         accionPendiente={c.accion_descripcion}
+        hoy={hoyMx()}
         pedidosMes={Number(c.pedidos_mes_mxn)}
         objetivo={
           c.objetivo_mensual_mxn !== null

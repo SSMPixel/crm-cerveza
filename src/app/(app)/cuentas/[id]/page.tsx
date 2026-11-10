@@ -86,7 +86,7 @@ async function DetalleCuenta({
     { texto: "WhatsApp", href: ligaWhatsApp(c.contacto_telefono) },
     { texto: "Correo", href: ligaCorreo(c.contacto_correo) },
     { texto: "Cómo llegar", href: comoLlegar },
-  ].filter((a): a is { texto: string; href: string } => a.href !== null);
+  ];
   const muestraPedidos =
     c.objetivo_mensual_mxn !== null ||
     Number(c.pedidos_mes_mxn) > 0 ||
@@ -159,11 +159,9 @@ async function DetalleCuenta({
             Registrar visita
           </Link>
         )}
-        {atajos.length > 0 && (
-          <div
-            className={`grid gap-2 ${atajos.length >= 4 ? "grid-cols-4" : atajos.length === 3 ? "grid-cols-3" : "grid-cols-2"}`}
-          >
-            {atajos.map((a) => (
+        <div className="grid grid-cols-4 gap-2">
+          {atajos.map((a) =>
+            a.href ? (
               <a
                 key={a.texto}
                 href={a.href}
@@ -173,9 +171,18 @@ async function DetalleCuenta({
               >
                 {a.texto}
               </a>
-            ))}
-          </div>
-        )}
+            ) : (
+              <span
+                key={a.texto}
+                title="Falta el dato en la cuenta"
+                aria-disabled="true"
+                className="rounded-lg border border-dashed border-stone-300 px-1 py-2.5 text-center text-sm text-stone-400"
+              >
+                {a.texto}
+              </span>
+            ),
+          )}
+        </div>
       </div>
 
       {muestraPedidos && (

@@ -31,8 +31,8 @@ export const estados: Record<
   hoy: {
     titulo: "Tocan hoy",
     singular: "Toca hoy",
-    punto: "bg-amber-500",
-    texto: "text-amber-700",
+    punto: "bg-green-600",
+    texto: "text-green-700",
   },
   al_dia: {
     titulo: "Al día",

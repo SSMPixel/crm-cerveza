@@ -102,7 +102,7 @@ export function VistaMapa({
           ))}
           {esKam && (
             <li className="flex items-center gap-1.5">
-              <span className="grid size-4 place-items-center rounded-full bg-amber-800 text-[9px] font-bold text-white">
+              <span className="grid size-4 place-items-center rounded-full bg-green-700 text-[9px] font-bold text-white">
                 1
               </span>
               Tu ruta
@@ -138,7 +138,7 @@ export function VistaMapa({
                       key={c.id}
                       className="flex items-center gap-3 rounded-xl border border-stone-200 bg-white p-3"
                     >
-                      <span className="grid size-7 shrink-0 place-items-center rounded-full bg-amber-800 text-sm font-bold text-white">
+                      <span className="grid size-7 shrink-0 place-items-center rounded-full bg-green-700 text-sm font-bold text-white">
                         {i + 1}
                       </span>
                       <Link

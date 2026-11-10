@@ -53,7 +53,7 @@ export function TarjetaCuenta({
           <div className="min-w-0">
             <p className="flex items-center gap-2 truncate font-medium">
               {numero !== undefined && (
-                <span className="grid size-6 shrink-0 place-items-center rounded-full bg-amber-800 text-xs font-bold text-white">
+                <span className="grid size-6 shrink-0 place-items-center rounded-full bg-green-700 text-xs font-bold text-white">
                   {numero}
                 </span>
               )}
@@ -78,10 +78,7 @@ export function TarjetaCuenta({
             {nombreEtapa[c.etapa] ?? c.etapa}
           </span>
           {c.visitada_hoy ? (
-            <span className="flex items-center gap-1.5 font-medium text-green-700">
-              <span className="size-2 rounded-full bg-green-600" aria-hidden />
-              Visitada hoy
-            </span>
+            <span className="font-medium text-green-700">✓ Visitada hoy</span>
           ) : (
             <span className="text-stone-600">
               {textoUltimaVisita(c.dias_sin_visita)}
