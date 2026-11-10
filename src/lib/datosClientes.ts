@@ -1,4 +1,5 @@
 // Datos del panel del auditor: métricas y alertas de cada cliente.
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { crearClienteServidor } from "@/lib/supabase/server";
 import { calcularAlertas, puntajeAtencion, type Alerta } from "@/lib/alertas";
 import { hoyMx, inicioDeHoyMx } from "@/lib/formato";
@@ -25,10 +26,12 @@ export type ResumenCliente = {
   puntaje: number;
 };
 
+// `cliente` permite usarlo desde el envío automático (sin usuario con sesión).
 export async function cargarClientes(
   soloEmpresa?: string,
+  cliente?: SupabaseClient,
 ): Promise<ResumenCliente[]> {
-  const supabase = await crearClienteServidor();
+  const supabase = cliente ?? (await crearClienteServidor());
   const hoy = hoyMx();
   const hace7 = new Date(
     Date.parse(`${hoy}T00:00:00-06:00`) - 6 * 86_400_000,

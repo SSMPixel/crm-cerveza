@@ -432,6 +432,13 @@ async function ResumenEquipo({
           ))}
         </div>
       </section>
+
+      <Link
+        href="/resumen"
+        className="mt-6 block rounded-lg border border-stone-300 bg-white px-4 py-3 text-center font-medium text-stone-800"
+      >
+        Ver resumen semanal
+      </Link>
     </>
   );
 }

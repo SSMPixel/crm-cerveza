@@ -4,7 +4,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const rutasPublicas = ["/login"];
+// /api/ revisa su propio permiso (la firma de Vercel), no la sesión.
+const rutasPublicas = ["/login", "/api/"];
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -41,7 +42,7 @@ export async function proxy(request: NextRequest) {
   if (!user && !esPublica) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
-  if (user && esPublica) {
+  if (user && request.nextUrl.pathname.startsWith("/login")) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 
