@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { crearClienteServidor } from "@/lib/supabase/server";
 import { obtenerPerfil } from "@/lib/sesion";
+import { BotonDescargar } from "@/components/BotonDescargar";
 import { empresaEnVista } from "@/lib/clienteActivo";
 import { redirect } from "next/navigation";
 import { estados, type EstadoSeguimiento } from "@/lib/formato";
@@ -85,9 +86,18 @@ async function ListaCuentas({
 
   return (
     <>
-      <h1 className="text-2xl font-semibold">
-        {veEquipo ? "Cuentas del equipo" : "Mis cuentas"}
-      </h1>
+      <div className="flex items-start justify-between gap-3">
+        <h1 className="text-2xl font-semibold">
+          {veEquipo ? "Cuentas del equipo" : "Mis cuentas"}
+        </h1>
+        <BotonDescargar
+          href={
+            kamFiltro
+              ? `/exportar/cuentas?kam=${kamFiltro}`
+              : "/exportar/cuentas"
+          }
+        />
+      </div>
       <p className="mt-1 text-sm text-stone-600">
         {cuentas.length} cuentas · lo más urgente arriba
       </p>

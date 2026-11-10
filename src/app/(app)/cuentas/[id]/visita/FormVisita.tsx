@@ -1,13 +1,16 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { distanciaMetros, textoDistancia } from "@/lib/geo";
-import { nombreEtapa } from "@/lib/formato";
+import { nombreEtapa, resultadosVisita } from "@/lib/formato";
 import { registrarVisita, type EstadoVisita } from "./acciones";
 import { AvancePedidos } from "@/components/AvancePedidos";
+import { FotosVisita } from "@/components/FotosVisita";
 
 type Props = {
   cuentaId: string;
+  empresaId: string;
   cuentaLat: number | null;
   cuentaLng: number | null;
   radio: number;
@@ -56,10 +59,12 @@ const estiloCampo =
   "mt-1 block w-full rounded-lg border border-stone-300 bg-white px-3 py-3 text-base focus:border-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-700/20";
 
 export function FormVisita(p: Props) {
-  const [estado, accion, enviando] = useActionState<EstadoVisita, FormData>(
-    registrarVisita.bind(null, p.cuentaId),
-    {},
-  );
+  const router = useRouter();
+  const [estado, setEstado] = useState<EstadoVisita>({});
+  const [enviando, iniciar] = useTransition();
+  const [resultado, setResultado] = useState("");
+  const [fotos, setFotos] = useState<string[]>([]);
+  const [subiendoFotos, setSubiendoFotos] = useState(false);
   const [ubicacion, setUbicacion] = useState<Ubicacion>({ estado: "buscando" });
   const [intento, setIntento] = useState(0);
   const [motivo, setMotivo] = useState("");
@@ -116,7 +121,10 @@ export function FormVisita(p: Props) {
 
   // Validación propia, con mensajes en español junto a cada campo
   // (los avisos nativos del navegador se ven distintos en cada uno y a veces vacíos).
-  function validar(e: React.FormEvent<HTMLFormElement>) {
+  function enviar(e: React.FormEvent<HTMLFormElement>) {
+    // El envío lo controla esta función (no el navegador), para que si algo
+    // falla el formulario NO se borre y el KAM pueda reintentar.
+    e.preventDefault();
     const fd = new FormData(e.currentTarget);
     const nuevos: Record<string, string> = {};
     if (pideMotivo && !fd.get("motivo"))
@@ -139,11 +147,26 @@ export function FormVisita(p: Props) {
     setErrores(nuevos);
     const primero = Object.keys(nuevos)[0];
     if (primero) {
-      e.preventDefault();
       document
         .getElementById(`campo-${primero}`)
         ?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
     }
+
+    fd.set("fotos", JSON.stringify(fotos));
+    setEstado({});
+    iniciar(async () => {
+      try {
+        const r = await registrarVisita(p.cuentaId, fd);
+        if (r.ok) router.push(`/cuentas/${p.cuentaId}?registrada=1`);
+        else setEstado(r);
+      } catch {
+        setEstado({
+          error:
+            "No se pudo guardar: parece que no hay conexión. Lo que escribiste sigue aquí; inténtalo de nuevo cuando tengas señal.",
+        });
+      }
+    });
   }
 
   // Enter en un campo de texto no envía el formulario (en el celular se presiona sin querer).
@@ -154,8 +177,7 @@ export function FormVisita(p: Props) {
 
   return (
     <form
-      action={accion}
-      onSubmit={validar}
+      onSubmit={enviar}
       onKeyDown={evitarEnter}
       onChange={() => {
         if (Object.keys(errores).length > 0) setErrores({});
@@ -248,6 +270,32 @@ export function FormVisita(p: Props) {
           </fieldset>
         )}
       </section>
+
+      {/* ---------- Resultado ---------- */}
+      <fieldset>
+        <legend className="font-medium">
+          ¿Cómo fue?{" "}
+          <span className="text-sm font-normal text-stone-500">(opcional)</span>
+        </legend>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {resultadosVisita.map((r) => (
+            <button
+              key={r.valor}
+              type="button"
+              aria-pressed={resultado === r.valor}
+              onClick={() => setResultado(resultado === r.valor ? "" : r.valor)}
+              className={`rounded-full border px-3 py-1.5 text-sm ${
+                resultado === r.valor
+                  ? "border-amber-800 bg-amber-800 text-white"
+                  : "border-stone-300 bg-white"
+              }`}
+            >
+              {r.texto}
+            </button>
+          ))}
+        </div>
+        <input type="hidden" name="resultado" value={resultado} />
+      </fieldset>
 
       {/* ---------- Lo pendiente ---------- */}
       {p.accionPendiente && (
@@ -375,6 +423,15 @@ export function FormVisita(p: Props) {
           )}
         </div>
 
+        <FotosVisita
+          empresaId={p.empresaId}
+          cuentaId={p.cuentaId}
+          onCambio={(rutas, subiendo) => {
+            setFotos(rutas);
+            setSubiendoFotos(subiendo);
+          }}
+        />
+
         <label className="block">
           <span className="font-medium">Nota</span>{" "}
           <span className="text-sm text-stone-500">(opcional)</span>
@@ -398,14 +455,18 @@ export function FormVisita(p: Props) {
 
       <button
         type="submit"
-        disabled={enviando || ubicacionActual.estado === "buscando"}
+        disabled={
+          enviando || subiendoFotos || ubicacionActual.estado === "buscando"
+        }
         className="sticky bottom-20 w-full rounded-lg bg-amber-800 px-4 py-3.5 text-base font-medium text-white shadow-lg hover:bg-amber-900 disabled:opacity-60"
       >
         {enviando
           ? "Guardando…"
-          : ubicacionActual.estado === "buscando"
-            ? "Esperando ubicación…"
-            : "Guardar visita"}
+          : subiendoFotos
+            ? "Subiendo fotos…"
+            : ubicacionActual.estado === "buscando"
+              ? "Esperando ubicación…"
+              : "Guardar visita"}
       </button>
     </form>
   );

@@ -10,12 +10,15 @@ import {
   nombreEtapa,
   textoFechaAccion,
   textoFechaPasada,
+  nombreResultado,
   textoUltimaVisita,
   type EstadoSeguimiento,
 } from "@/lib/formato";
 import { ligaComoLlegar, textoDistancia } from "@/lib/geo";
 import { ligaCorreo, ligaLlamada, ligaWhatsApp } from "@/lib/contacto";
 import { AvancePedidos } from "@/components/AvancePedidos";
+import { Miniaturas } from "@/components/Miniaturas";
+import { ligasFotos } from "@/lib/fotos";
 
 const nombreObjetivo: Record<string, string> = {
   grifo: "Grifo",
@@ -64,7 +67,7 @@ async function DetalleCuenta({
       supabase
         .from("visitas")
         .select(
-          "id, fecha_hora, distancia_m, fuera_de_rango, motivo_fuera_rango, nota",
+          "id, fecha_hora, distancia_m, fuera_de_rango, motivo_fuera_rango, nota, resultado, fotos",
         )
         .eq("cuenta_id", id)
         .order("fecha_hora", { ascending: false })
@@ -76,6 +79,9 @@ async function DetalleCuenta({
     ]);
 
   if (!c) notFound();
+  const fotosLigas = await ligasFotos(
+    (visitas ?? []).flatMap((v) => v.fotos ?? []),
+  );
 
   const estado = estados[c.estado_seguimiento as EstadoSeguimiento];
   const puedeRegistrar =
@@ -273,7 +279,15 @@ async function DetalleCuenta({
                     Motivo: {v.motivo_fuera_rango}
                   </p>
                 )}
+                {v.resultado && (
+                  <p className="mt-1">
+                    <span className="rounded-md bg-stone-100 px-2 py-0.5 text-stone-700">
+                      {nombreResultado[v.resultado]}
+                    </span>
+                  </p>
+                )}
                 {v.nota && <p className="mt-1 text-stone-800">{v.nota}</p>}
+                <Miniaturas rutas={v.fotos ?? []} ligas={fotosLigas} />
               </li>
             ))}
           </ul>

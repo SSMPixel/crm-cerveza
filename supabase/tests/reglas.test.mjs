@@ -4,19 +4,28 @@ import fs from 'fs';
 const db = new PGlite();
 const archivos = process.argv.slice(2);
 
-// Simular lo que Supabase ya trae: esquema auth, auth.users, auth.uid() y el rol "authenticated".
+// Simular lo que Supabase ya trae: esquemas auth y storage, auth.uid() y el rol "authenticated".
 await db.exec(`
   create schema auth;
   create table auth.users (id uuid primary key);
   create function auth.uid() returns uuid language sql stable as
     $$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
   create role authenticated;
+  create role anon;
+  create schema storage;
+  create table storage.buckets (id text primary key, name text, public boolean,
+    file_size_limit bigint, allowed_mime_types text[]);
+  create table storage.objects (id uuid primary key default gen_random_uuid(),
+    bucket_id text, name text, owner uuid default auth.uid());
+  alter table storage.objects enable row level security;
+  create function storage.foldername(name text) returns text[] language sql immutable as
+    $$ select (string_to_array(name, '/'))[1:array_length(string_to_array(name, '/'), 1) - 1] $$;
 `);
 for (const f of archivos) await db.exec(fs.readFileSync(f, 'utf8'));
 await db.exec(`
-  grant usage on schema public, auth to authenticated;
-  grant all on all tables in schema public to authenticated;
-  grant execute on all functions in schema public, auth to authenticated;
+  grant usage on schema public, auth, storage to authenticated;
+  grant all on all tables in schema public, storage to authenticated;
+  grant execute on all functions in schema public, auth, storage to authenticated;
 `);
 
 // Datos: 2 empresas, auditor, manager y 2 KAMs de la empresa 1, 1 KAM de la empresa 2.
@@ -174,6 +183,30 @@ if (archivos.some(f => f.includes('0005'))) {
   check('Manager ajusta la meta de su KAM', r.rows?.[0]?.meta_visitas_dia === 3);
   r = await as(U.man, `update perfiles set meta_visitas_dia = 3 where id = '${U.k3}' returning id`);
   check('Manager no toca KAMs de otra empresa', !r.rows?.length);
+}
+
+// ---------- Resultado de visita y fotos ----------
+if (archivos.some(f => f.includes('0007'))) {
+  const carpeta2 = `${E1}/${cuenta2}`;
+  r = await as(U.k2, `insert into storage.objects (bucket_id, name) values ('fotos-visitas', '${carpeta2}/a.jpg') returning id`);
+  check('KAM sube foto a su cuenta', r.rows?.length === 1);
+  r = await as(U.k2, `insert into storage.objects (bucket_id, name) values ('fotos-visitas', '${E1}/${cuenta1}/b.jpg')`);
+  check('KAM no sube foto a cuenta ajena', !!r.error);
+  r = await as(U.k3, `insert into storage.objects (bucket_id, name) values ('fotos-visitas', '${carpeta2}/c.jpg')`);
+  check('KAM de otra empresa no sube a esta empresa', !!r.error);
+  r = await as(U.man, `insert into storage.objects (bucket_id, name) values ('fotos-visitas', '${carpeta2}/d.jpg')`);
+  check('Manager no sube fotos de visita', !!r.error);
+  r = await as(U.k1, `select name from storage.objects`);
+  check('Equipo de la empresa ve la foto', r.rows?.length === 1);
+  r = await as(U.k3, `select name from storage.objects`);
+  check('Otra empresa no ve la foto', r.rows?.length === 0);
+
+  r = await as(U.k2, `select * from registrar_visita('${cuenta2}', 19.4190, -99.1613, null, null, 'Llevar carta', hoy_mx() + 2, true, null, null, 'degusto', array['${carpeta2}/a.jpg'])`);
+  check('Visita con resultado y foto', r.rows?.length === 1);
+  r = await as(U.k2, `select resultado, fotos from visitas where id = '${r.rows?.[0]?.visita_id}'`);
+  check('Se guardan resultado y foto', r.rows?.[0]?.resultado === 'degusto' && r.rows[0].fotos.length === 1);
+  r = await as(U.k2, `select * from registrar_visita('${cuenta2}', 19.4190, -99.1613, null, null, 'Algo', hoy_mx() + 2, true, null, null, null, array['${E1}/${cuenta1}/x.jpg'])`);
+  check('Foto de otra cuenta se rechaza', r.error?.includes('FOTO_INVALIDA'));
 }
 
 console.log(`\n${ok} correctas, ${fail} fallas`);

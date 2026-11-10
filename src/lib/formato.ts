@@ -102,3 +102,18 @@ export function textoFechaPasada(fecha: string): string {
   if (d === 1) return "ayer";
   return `hace ${d} días`;
 }
+
+// Resultado de la visita (lista corta y opcional).
+export const resultadosVisita = [
+  { valor: "degusto", texto: "Degustó" },
+  { valor: "pidio_precios", texto: "Pidió precios" },
+  { valor: "hizo_pedido", texto: "Hizo pedido" },
+  { valor: "no_estaba_decisor", texto: "No estaba quien decide" },
+  { valor: "cerrado", texto: "Estaba cerrado" },
+  { valor: "seguimiento", texto: "Seguimiento de rutina" },
+  { valor: "sin_interes", texto: "Sin interés" },
+] as const;
+
+export const nombreResultado: Record<string, string> = Object.fromEntries(
+  resultadosVisita.map((r) => [r.valor, r.texto]),
+);

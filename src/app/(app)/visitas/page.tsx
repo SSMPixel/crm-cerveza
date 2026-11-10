@@ -4,8 +4,11 @@ import { Suspense } from "react";
 import { crearClienteServidor } from "@/lib/supabase/server";
 import { obtenerPerfil } from "@/lib/sesion";
 import { empresaEnVista } from "@/lib/clienteActivo";
-import { hoyMx } from "@/lib/formato";
+import { hoyMx, nombreResultado } from "@/lib/formato";
 import { textoDistancia } from "@/lib/geo";
+import { ligasFotos } from "@/lib/fotos";
+import { Miniaturas } from "@/components/Miniaturas";
+import { BotonDescargar } from "@/components/BotonDescargar";
 
 const mxn = new Intl.NumberFormat("es-MX", {
   style: "currency",
@@ -45,6 +48,8 @@ type Visita = {
   fuera_de_rango: boolean;
   motivo_fuera_rango: string | null;
   nota: string | null;
+  resultado: string | null;
+  fotos: string[];
   kam_id: string;
   cuenta_id: string;
   cuentas: { nombre: string; zona: string | null } | null;
@@ -99,7 +104,7 @@ async function Historial({
   let q = supabase
     .from("visitas")
     .select(
-      "id, fecha_hora, distancia_m, fuera_de_rango, motivo_fuera_rango, nota, kam_id, cuenta_id, cuentas(nombre, zona), perfiles(nombre), pedidos(monto_mxn), proximas_acciones(descripcion, fecha_compromiso)",
+      "id, fecha_hora, distancia_m, fuera_de_rango, motivo_fuera_rango, nota, resultado, fotos, kam_id, cuenta_id, cuentas(nombre, zona), perfiles(nombre), pedidos(monto_mxn), proximas_acciones(descripcion, fecha_compromiso)",
     )
     .gte("fecha_hora", desde)
     .order("fecha_hora", { ascending: false })
@@ -134,6 +139,7 @@ async function Historial({
     : null;
 
   const fuera = visitas.filter((v) => v.fuera_de_rango).length;
+  const fotosLigas = await ligasFotos(visitas.flatMap((v) => v.fotos ?? []));
   const pedidos = visitas.reduce(
     (s, v) => s + v.pedidos.reduce((t, p) => t + Number(p.monto_mxn), 0),
     0,
@@ -155,13 +161,18 @@ async function Historial({
 
   return (
     <>
-      <h1 className="text-2xl font-semibold">
-        {veEquipo
-          ? nombreKam
-            ? `Visitas de ${nombreKam}`
-            : "Historial de visitas"
-          : "Mis visitas"}
-      </h1>
+      <div className="flex items-start justify-between gap-3">
+        <h1 className="text-2xl font-semibold">
+          {veEquipo
+            ? nombreKam
+              ? `Visitas de ${nombreKam}`
+              : "Historial de visitas"
+            : "Mis visitas"}
+        </h1>
+        <BotonDescargar
+          href={liga({}).replace("/visitas?", "/exportar/visitas?")}
+        />
+      </div>
       <p className="mt-1 text-sm text-stone-600">
         {visitas.length} visitas
         {fuera > 0 && (
@@ -267,9 +278,15 @@ async function Historial({
                         Pedido {mxn.format(pedido)}
                       </span>
                     )}
+                    {v.resultado && (
+                      <span className="rounded-md bg-stone-100 px-2 py-0.5 text-stone-700">
+                        {nombreResultado[v.resultado]}
+                      </span>
+                    )}
                   </div>
 
                   {v.nota && <p className="mt-1.5 text-stone-800">{v.nota}</p>}
+                  <Miniaturas rutas={v.fotos ?? []} ligas={fotosLigas} />
                   {accion && (
                     <p className="mt-1.5 text-stone-600">
                       → {accion.descripcion}{" "}

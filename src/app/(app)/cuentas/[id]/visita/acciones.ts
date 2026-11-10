@@ -1,10 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { crearClienteServidor } from "@/lib/supabase/server";
 
-export type EstadoVisita = { error?: string };
+export type EstadoVisita = { error?: string; ok?: boolean };
 
 // Traducción de los errores que manda la base de datos a lenguaje del KAM.
 const mensajes: Record<string, string> = {
@@ -13,11 +12,23 @@ const mensajes: Record<string, string> = {
   FALTA_PROXIMA_ACCION: "Escribe la próxima acción y su fecha.",
   FECHA_EN_PASADO: "La próxima acción no puede tener fecha pasada.",
   CUENTA_NO_ENCONTRADA: "No encontramos esta cuenta.",
+  FOTO_INVALIDA: "Una de las fotos no es válida. Quítala y vuelve a subirla.",
 };
 
+const resultadosValidos = new Set([
+  "degusto",
+  "pidio_precios",
+  "hizo_pedido",
+  "no_estaba_decisor",
+  "cerrado",
+  "seguimiento",
+  "sin_interes",
+]);
+
+// Devuelve { ok: true } al guardar; la pantalla se encarga de avanzar.
+// Así, si algo falla, el KAM no pierde lo que escribió.
 export async function registrarVisita(
   cuentaId: string,
-  _estado: EstadoVisita,
   formData: FormData,
 ): Promise<EstadoVisita> {
   const texto = (k: string) => String(formData.get(k) ?? "").trim();
@@ -31,6 +42,16 @@ export async function registrarVisita(
     return { error: "El monto del pedido debe ser un número mayor a cero." };
   }
 
+  let fotos: string[] = [];
+  try {
+    const crudas = JSON.parse(texto("fotos") || "[]");
+    if (Array.isArray(crudas))
+      fotos = crudas.filter((f) => typeof f === "string").slice(0, 3);
+  } catch {
+    fotos = [];
+  }
+
+  const resultado = texto("resultado");
   const motivo =
     texto("motivo") === "Otro" ? texto("motivo_otro") : texto("motivo");
 
@@ -46,6 +67,8 @@ export async function registrarVisita(
     p_cumplio_anterior: formData.get("cumplio") === "on",
     p_monto_pedido: monto,
     p_nueva_etapa: texto("etapa") || null,
+    p_resultado: resultadosValidos.has(resultado) ? resultado : null,
+    p_fotos: fotos,
   });
 
   if (error) {
@@ -63,5 +86,5 @@ export async function registrarVisita(
   }
 
   revalidatePath("/", "layout");
-  redirect(`/cuentas/${cuentaId}?registrada=1`);
+  return { ok: true };
 }

@@ -64,6 +64,7 @@ async function Contenido({
       <p className="text-stone-600">{c.nombre}</p>
       <FormVisita
         cuentaId={c.id}
+        empresaId={c.empresa_id}
         cuentaLat={c.lat}
         cuentaLng={c.lng}
         radio={empresa?.radio_checkin_m ?? 300}
