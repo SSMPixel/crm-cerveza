@@ -1,5 +1,130 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-sans:
+    system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+    sans-serif;
+}
+
+/* ---------- Modo oscuro ----------
+   Sigue al dispositivo, salvo que la persona elija "Claro" u "Oscuro" en Mi perfil
+   (eso se guarda como data-tema en <html>). */
+:root[data-tema="oscuro"] {
+  color-scheme: dark;
+  /* Superficies y textos: la escala "stone" se invierte. */
+  --color-white: #231f1d;
+  --color-stone-50: #141110;
+  --color-stone-100: #2c2725;
+  --color-stone-200: #38322f;
+  --color-stone-300: #4a433f;
+  --color-stone-400: #857d77;
+  --color-stone-500: #a19993;
+  --color-stone-600: #bab2ab;
+  --color-stone-700: #d2cbc5;
+  --color-stone-800: #e6e1dc;
+  --color-stone-900: #f4f1ee;
+  --color-stone-950: #fafaf9;
+
+  /* El texto blanco va sobre botones de color: se queda blanco. */
+  & .text-white {
+    color: #fff;
+  }
+
+  /* Avisos y etiquetas: fondo tenue y letra clara. */
+  & .bg-green-50 {
+    background-color: rgb(22 163 74 / 0.16);
+  }
+  & .bg-green-100 {
+    background-color: rgb(22 163 74 / 0.28);
+  }
+  & .bg-red-50 {
+    background-color: rgb(220 38 38 / 0.18);
+  }
+  & .bg-orange-50 {
+    background-color: rgb(249 115 22 / 0.16);
+  }
+  & .bg-amber-50 {
+    background-color: rgb(217 119 6 / 0.18);
+  }
+  & .border-green-200 {
+    border-color: rgb(22 163 74 / 0.4);
+  }
+  & .text-green-700,
+  & .text-green-800,
+  & .text-green-900 {
+    color: #86efac;
+  }
+  & .text-red-700,
+  & .text-red-800 {
+    color: #fca5a5;
+  }
+  & .text-orange-700,
+  & .text-orange-800 {
+    color: #fdba74;
+  }
+  & .text-amber-800,
+  & .text-amber-900 {
+    color: #fcd34d;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema="claro"]) {
+    color-scheme: dark;
+    /* Superficies y textos: la escala "stone" se invierte. */
+    --color-white: #231f1d;
+    --color-stone-50: #141110;
+    --color-stone-100: #2c2725;
+    --color-stone-200: #38322f;
+    --color-stone-300: #4a433f;
+    --color-stone-400: #857d77;
+    --color-stone-500: #a19993;
+    --color-stone-600: #bab2ab;
+    --color-stone-700: #d2cbc5;
+    --color-stone-800: #e6e1dc;
+    --color-stone-900: #f4f1ee;
+    --color-stone-950: #fafaf9;
+
+    /* El texto blanco va sobre botones de color: se queda blanco. */
+    & .text-white {
+      color: #fff;
+    }
+
+    /* Avisos y etiquetas: fondo tenue y letra clara. */
+    & .bg-green-50 {
+      background-color: rgb(22 163 74 / 0.16);
+    }
+    & .bg-green-100 {
+      background-color: rgb(22 163 74 / 0.28);
+    }
+    & .bg-red-50 {
+      background-color: rgb(220 38 38 / 0.18);
+    }
+    & .bg-orange-50 {
+      background-color: rgb(249 115 22 / 0.16);
+    }
+    & .bg-amber-50 {
+      background-color: rgb(217 119 6 / 0.18);
+    }
+    & .border-green-200 {
+      border-color: rgb(22 163 74 / 0.4);
+    }
+    & .text-green-700,
+    & .text-green-800,
+    & .text-green-900 {
+      color: #86efac;
+    }
+    & .text-red-700,
+    & .text-red-800 {
+      color: #fca5a5;
+    }
+    & .text-orange-700,
+    & .text-orange-800 {
+      color: #fdba74;
+    }
+    & .text-amber-800,
+    & .text-amber-900 {
+      color: #fcd34d;
+    }
+  }
 }

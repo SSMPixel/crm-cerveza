@@ -11,11 +11,18 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   themeColor: "#92400e",
+  colorScheme: "light dark",
 };
+
+const scriptTema = `try{var t=localStorage.getItem("tema");if(t==="claro"||t==="oscuro")document.documentElement.dataset.tema=t}catch(e){}`;
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="es-MX" className="h-full antialiased">
+    <html lang="es-MX" className="h-full antialiased" suppressHydrationWarning>
+      <head>
+        {/* Aplica el tema elegido antes de pintar, para que no parpadee. */}
+        <script dangerouslySetInnerHTML={{ __html: scriptTema }} />
+      </head>
       <body className="flex min-h-full flex-col bg-stone-50 text-stone-900">
         {children}
       </body>

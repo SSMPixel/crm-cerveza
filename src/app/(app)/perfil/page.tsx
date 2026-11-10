@@ -4,6 +4,7 @@ import { nombreRol } from "@/lib/formato";
 import { cerrarSesion } from "../../login/acciones";
 import { cambiarContrasena } from "./acciones";
 import { CampoContrasena } from "@/components/CampoContrasena";
+import { ElegirTema } from "@/components/ElegirTema";
 
 export const metadata = { title: "Mi perfil" };
 
@@ -87,6 +88,14 @@ async function Contenido({
           Guardar contraseña
         </button>
       </form>
+
+      <section className="mt-6 rounded-xl border border-stone-200 bg-white p-4">
+        <h2 className="font-semibold">Apariencia</h2>
+        <p className="mb-3 text-sm text-stone-600">
+          Automático sigue el modo claro u oscuro de tu celular.
+        </p>
+        <ElegirTema />
+      </section>
 
       <form action={cerrarSesion} className="mt-8">
         <button className="text-sm text-stone-600 underline underline-offset-4">
