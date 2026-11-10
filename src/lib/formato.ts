@@ -20,17 +20,29 @@ export type EstadoSeguimiento = "vencida" | "hoy" | "al_dia" | "cerrada";
 
 export const estados: Record<
   EstadoSeguimiento,
-  { titulo: string; punto: string; texto: string }
+  { titulo: string; singular: string; punto: string; texto: string }
 > = {
   vencida: {
     titulo: "Atrasadas",
+    singular: "Atrasada",
     punto: "bg-orange-500",
     texto: "text-orange-700",
   },
-  hoy: { titulo: "Tocan hoy", punto: "bg-amber-500", texto: "text-amber-700" },
-  al_dia: { titulo: "Al día", punto: "bg-stone-400", texto: "text-stone-600" },
+  hoy: {
+    titulo: "Tocan hoy",
+    singular: "Toca hoy",
+    punto: "bg-amber-500",
+    texto: "text-amber-700",
+  },
+  al_dia: {
+    titulo: "Al día",
+    singular: "Al día",
+    punto: "bg-stone-400",
+    texto: "text-stone-600",
+  },
   cerrada: {
     titulo: "Perdidas",
+    singular: "Perdida",
     punto: "bg-stone-300",
     texto: "text-stone-500",
   },

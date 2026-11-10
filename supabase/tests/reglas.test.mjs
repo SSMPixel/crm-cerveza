@@ -125,5 +125,43 @@ await db.exec(`reset role; insert into proximas_acciones (empresa_id, cuenta_id,
 r = await as(U.aud, `select estado_seguimiento, accion_descripcion from vista_cuentas where nombre = 'Bar del KAM 2'`);
 check('Vista: próxima acción para hoy marca "hoy"', r.rows?.[0]?.estado_seguimiento === 'hoy' && r.rows[0].accion_descripcion === 'Llevar degustación');
 
+// ---------- Registrar visita ----------
+if (archivos.some(f => f.includes('0004'))) {
+  await db.exec(`reset role; update cuentas set lat = 19.4189, lng = -99.1612 where nombre = 'Bar del KAM 2';
+                 update cuentas set etapa = 'negociacion' where nombre = 'Bar del KAM 2';`);
+  const rv = (args) => `select * from registrar_visita('${cuenta2}', ${args})`;
+
+  r = await as(U.k2, rv(`19.4190, -99.1613, null, 'Todo bien', 'Llevar barril', hoy_mx() + 3, true, 5200, 'primer_pedido'`));
+  check('Visita dentro de rango se registra', r.rows?.[0]?.fuera_de_rango === false && r.rows[0].distancia < 30);
+  r = await as(U.k2, `select count(*)::int as n from proximas_acciones where cuenta_id = '${cuenta2}' and not cumplida`);
+  check('Acción anterior se cierra y queda solo la nueva', r.rows?.[0]?.n === 1);
+  r = await as(U.k2, `select etapa from cuentas where id = '${cuenta2}'`);
+  check('La visita mueve la etapa', r.rows?.[0]?.etapa === 'primer_pedido');
+  r = await as(U.k2, `select monto_mxn from pedidos where cuenta_id = '${cuenta2}'`);
+  check('El pedido queda ligado', r.rows?.length === 1 && Number(r.rows[0].monto_mxn) === 5200);
+
+  r = await as(U.k2, rv(`19.4400, -99.1400, null, null, 'Volver', hoy_mx() + 1`));
+  check('Lejos y sin motivo se rechaza', r.error?.includes('FUERA_DE_RANGO_SIN_MOTIVO'));
+  r = await as(U.k2, rv(`19.4400, -99.1400, 'Llamada telefónica', null, 'Volver', hoy_mx() + 1`));
+  check('Lejos con motivo se guarda marcada', r.rows?.[0]?.fuera_de_rango === true && r.rows[0].distancia > 2000);
+  r = await as(U.k2, rv(`null, null, 'GPS apagado', null, 'Volver', hoy_mx() + 1`));
+  check('Sin ubicación se guarda marcada', r.rows?.[0]?.fuera_de_rango === true);
+  r = await as(U.k2, rv(`19.4190, -99.1613, null, null, '', hoy_mx() + 1`));
+  check('Sin próxima acción se rechaza', r.error?.includes('FALTA_PROXIMA_ACCION'));
+  r = await as(U.k2, rv(`19.4190, -99.1613, null, null, 'Algo', hoy_mx() - 1`));
+  check('Próxima acción en el pasado se rechaza', r.error?.includes('FECHA_EN_PASADO'));
+  r = await as(U.k2, rv(`19.4190, -99.1613, null, null, 'Algo', hoy_mx() + 1, true, null, 'perdido'`));
+  check('KAM no puede dar por perdida desde la visita', !!r.error);
+  r = await as(U.k1, rv(`19.4190, -99.1613, null, null, 'Algo', hoy_mx() + 1`));
+  check('KAM no registra visita en cuenta ajena', !!r.error);
+  r = await as(U.k2, `insert into visitas (empresa_id, cuenta_id, kam_id, fecha_hora, lat, lng) values ('${E1}', '${cuenta2}', '${U.k2}', now() - interval '10 days', 19.4190, -99.1613) returning fecha_hora > now() - interval '1 minute' as ahora`);
+  check('El KAM no puede inventar la hora de la visita', r.rows?.[0]?.ahora === true);
+
+  await db.exec(`reset role; insert into cuentas (id, empresa_id, kam_id, nombre) values ('20000000-0000-0000-0000-000000000001', '${E1}', '${U.k2}', 'Prospecto sin ubicación');`);
+  r = await as(U.k2, `select * from registrar_visita('20000000-0000-0000-0000-000000000001', 19.3500, -99.1600, null, null, 'Presentación', hoy_mx() + 2)`);
+  r = await as(U.k2, `select lat, lng from cuentas where id = '20000000-0000-0000-0000-000000000001'`);
+  check('Primera visita fija la ubicación del prospecto', r.rows?.[0]?.lat === 19.35);
+}
+
 console.log(`\n${ok} correctas, ${fail} fallas`);
 process.exit(fail ? 1 : 0);

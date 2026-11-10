@@ -132,9 +132,7 @@ async function DiaDelKam({ perfil }: { perfil: Perfil }) {
       {plan.length > 0 && (
         <section className="mt-6">
           <h2 className="font-semibold">Tu plan de hoy</h2>
-          <p className="text-sm text-stone-600">
-            Las que más conviene visitar, en este orden.
-          </p>
+          <p className="text-sm text-stone-600">Las más urgentes primero.</p>
           <ol className="mt-3 space-y-2">
             {plan.map((c) => (
               <TarjetaCuenta key={c.id} cuenta={c} />
