@@ -12,8 +12,12 @@ export default function PaginaLogin() {
   return (
     <main className="flex flex-1 items-center justify-center px-4 py-12">
       <div className="w-full max-w-sm">
-        <h1 className="text-2xl font-semibold text-stone-900">Iniciar sesión</h1>
-        <p className="mt-1 text-sm text-stone-600">Entra con el correo que te dio tu manager.</p>
+        <h1 className="text-2xl font-semibold text-stone-900">
+          Iniciar sesión
+        </h1>
+        <p className="mt-1 text-sm text-stone-600">
+          Entra con el correo que te dio tu manager.
+        </p>
 
         <form action={accion} className="mt-8 space-y-4">
           <label className="block">
@@ -29,7 +33,9 @@ export default function PaginaLogin() {
           </label>
 
           <label className="block">
-            <span className="text-sm font-medium text-stone-800">Contraseña</span>
+            <span className="text-sm font-medium text-stone-800">
+              Contraseña
+            </span>
             <input
               name="contrasena"
               type="password"

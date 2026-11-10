@@ -15,7 +15,8 @@ export function Navegacion() {
     <nav className="fixed inset-x-0 bottom-0 border-t border-stone-200 bg-white/95 backdrop-blur pb-[env(safe-area-inset-bottom)]">
       <ul className="mx-auto flex max-w-md">
         {secciones.map((s) => {
-          const activa = s.href === "/" ? ruta === "/" : ruta.startsWith(s.href);
+          const activa =
+            s.href === "/" ? ruta === "/" : ruta.startsWith(s.href);
           return (
             <li key={s.href} className="flex-1">
               <Link

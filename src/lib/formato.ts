@@ -22,17 +22,25 @@ export const estados: Record<
   EstadoSeguimiento,
   { titulo: string; punto: string; texto: string }
 > = {
-  vencida: { titulo: "Vencidas", punto: "bg-red-600", texto: "text-red-700" },
+  vencida: {
+    titulo: "Atrasadas",
+    punto: "bg-orange-500",
+    texto: "text-orange-700",
+  },
   hoy: { titulo: "Tocan hoy", punto: "bg-amber-500", texto: "text-amber-700" },
   al_dia: { titulo: "Al día", punto: "bg-stone-400", texto: "text-stone-600" },
-  cerrada: { titulo: "Perdidas", punto: "bg-stone-300", texto: "text-stone-500" },
+  cerrada: {
+    titulo: "Perdidas",
+    punto: "bg-stone-300",
+    texto: "text-stone-500",
+  },
 };
 
 // Fecha de hoy en Ciudad de México, como "AAAA-MM-DD".
 export function hoyMx(): string {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Mexico_City" }).format(
-    new Date(),
-  );
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Mexico_City",
+  }).format(new Date());
 }
 
 // Días entre hoy (CDMX) y una fecha "AAAA-MM-DD". Positivo = en el futuro.
@@ -57,3 +65,20 @@ export function textoUltimaVisita(dias: number | null): string {
   if (dias === 1) return "Visitada ayer";
   return `Visitada hace ${dias} días`;
 }
+
+// "bar" → "Bar". Los tipos de lugar se muestran siempre con mayúscula inicial.
+export function capitalizar(texto: string | null): string {
+  if (!texto) return "";
+  return texto.charAt(0).toLocaleUpperCase("es-MX") + texto.slice(1);
+}
+
+// Inicio del día de hoy en CDMX, para filtrar visitas de hoy.
+export function inicioDeHoyMx(): string {
+  return `${hoyMx()}T00:00:00-06:00`;
+}
+
+export const estiloCategoria: Record<string, string> = {
+  A: "bg-amber-800 text-white",
+  B: "bg-amber-200 text-amber-950",
+  C: "border border-stone-400 text-stone-600",
+};
