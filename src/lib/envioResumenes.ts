@@ -69,13 +69,11 @@ export async function enviarResumenesDelTurno(turno: "manana" | "tarde") {
     });
 
     if (envio.ok) {
-      await supabase
-        .from("resumenes_enviados")
-        .insert({
-          empresa_id: e.id,
-          fecha: hoy,
-          destinatarios: [...para, ...copiaAuditor],
-        });
+      await supabase.from("resumenes_enviados").insert({
+        empresa_id: e.id,
+        fecha: hoy,
+        destinatarios: [...para, ...copiaAuditor],
+      });
       resultados.push({ empresa: e.nombre, resultado: "enviado" });
     } else {
       resultados.push({ empresa: e.nombre, resultado: envio.error });

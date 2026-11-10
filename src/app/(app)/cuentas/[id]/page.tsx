@@ -100,9 +100,17 @@ async function DetalleCuenta({
 
   return (
     <>
-      <Link href="/cuentas" className="text-sm text-stone-600">
-        ← Cuentas
-      </Link>
+      <div className="flex items-center justify-between">
+        <Link href="/cuentas" className="text-sm text-stone-600">
+          ← Cuentas
+        </Link>
+        <Link
+          href={`/cuentas/${c.id}/editar`}
+          className="rounded-md border border-stone-300 bg-white px-2.5 py-1 text-sm font-medium text-stone-700"
+        >
+          Editar
+        </Link>
+      </div>
 
       {registrada && (
         <p

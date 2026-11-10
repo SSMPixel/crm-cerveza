@@ -209,5 +209,29 @@ if (archivos.some(f => f.includes('0007'))) {
   check('Foto de otra cuenta se rechaza', r.error?.includes('FOTO_INVALIDA'));
 }
 
+// ---------- Altas y ediciones ----------
+if (archivos.some(f => f.includes('0009'))) {
+  await db.exec(`reset role; update cuentas set etapa = 'activo' where id = '${cuenta2}';`);
+  r = await as(U.k2, `update cuentas set contacto_telefono = '5512345678' where id = '${cuenta2}' returning contacto_telefono`);
+  check('KAM corrige el teléfono de su cuenta', r.rows?.[0]?.contacto_telefono === '5512345678');
+  r = await as(U.k2, `update cuentas set categoria = 'C' where id = '${cuenta2}'`);
+  check('KAM no puede cambiar la categoría', r.error?.includes('SOLO_MANAGER_CATEGORIA'));
+  r = await as(U.k2, `update cuentas set objetivo_mensual_mxn = 1 where id = '${cuenta2}'`);
+  check('KAM no puede cambiar el objetivo', r.error?.includes('SOLO_MANAGER_OBJETIVO'));
+  r = await as(U.man, `update cuentas set categoria = 'A', objetivo_mensual_mxn = 9000 where id = '${cuenta2}' returning categoria`);
+  check('Manager cambia categoría y objetivo', r.rows?.[0]?.categoria === 'A');
+  r = await as(U.k2, `insert into cuentas (empresa_id, kam_id, nombre, categoria, objetivo_mensual_mxn) values ('${E1}', '${U.k1}', 'Prospecto nuevo de Sofía', 'A', 50000) returning kam_id, categoria, objetivo_mensual_mxn`);
+  check('Cuenta creada por KAM queda suya, en C y sin objetivo',
+    r.rows?.[0]?.kam_id === U.k2 && r.rows[0].categoria === 'C' && r.rows[0].objetivo_mensual_mxn === null);
+  r = await as(U.man, `insert into cuentas (empresa_id, kam_id, nombre, categoria) values ('${E1}', '${U.k1}', 'Cuenta del manager', 'A') returning categoria, kam_id`);
+  check('Manager crea cuenta A y la asigna', r.rows?.[0]?.categoria === 'A' && r.rows[0].kam_id === U.k1);
+  r = await as(U.man, `insert into cuentas (empresa_id, nombre) values ('${E2}', 'Intruso') returning id`);
+  check('Manager no crea cuentas en otra empresa', !!r.error);
+  r = await as(U.man, `update empresas set frecuencia_a_dias = 10, meta_visitas_dia = 4 where id = '${E1}' returning frecuencia_a_dias`);
+  check('Manager ajusta frecuencias y meta de su empresa', r.rows?.[0]?.frecuencia_a_dias === 10);
+  r = await as(U.k1, `update empresas set meta_visitas_dia = 1 where id = '${E1}' returning id`);
+  check('KAM no ajusta la configuración de la empresa', !r.rows?.length);
+}
+
 console.log(`\n${ok} correctas, ${fail} fallas`);
 process.exit(fail ? 1 : 0);

@@ -433,22 +433,38 @@ async function ResumenEquipo({
         </div>
       </section>
 
-      <Link
-        href="/resumen"
-        className="mt-6 block rounded-lg border border-stone-300 bg-white px-4 py-3 text-center font-medium text-stone-800"
-      >
-        Ver resumen semanal
-      </Link>
+      <div className="mt-6 grid grid-cols-2 gap-2">
+        <Link
+          href="/resumen"
+          className="block rounded-lg border border-stone-300 bg-white px-3 py-3 text-center font-medium text-stone-800"
+        >
+          Resumen semanal
+        </Link>
+        <Link
+          href="/equipo"
+          className="block rounded-lg border border-stone-300 bg-white px-3 py-3 text-center font-medium text-stone-800"
+        >
+          Equipo y ajustes
+        </Link>
+      </div>
     </>
   );
 }
 
 function CerrarSesion() {
   return (
-    <form action={cerrarSesion} className="mt-10">
-      <button className="text-sm text-stone-600 underline underline-offset-4">
-        Cerrar sesión
-      </button>
-    </form>
+    <div className="mt-10 flex items-center gap-4 text-sm">
+      <Link
+        href="/perfil"
+        className="text-stone-600 underline underline-offset-4"
+      >
+        Mi perfil
+      </Link>
+      <form action={cerrarSesion}>
+        <button className="text-stone-600 underline underline-offset-4">
+          Cerrar sesión
+        </button>
+      </form>
+    </div>
   );
 }

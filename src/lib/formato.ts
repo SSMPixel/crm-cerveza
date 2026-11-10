@@ -117,3 +117,15 @@ export const resultadosVisita = [
 export const nombreResultado: Record<string, string> = Object.fromEntries(
   resultadosVisita.map((r) => [r.valor, r.texto]),
 );
+
+// Tipos de lugar: lista cerrada para que los datos salgan limpios.
+export const tiposLugar = [
+  "bar",
+  "restaurante",
+  "cantina",
+  "tienda",
+  "hotel",
+  "cadena",
+  "distribuidor",
+  "otro",
+] as const;

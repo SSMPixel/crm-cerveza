@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { obtenerPerfil } from "@/lib/sesion";
@@ -40,7 +41,15 @@ async function Contenido() {
   return (
     <>
       <p className="text-sm text-stone-600">Auditor</p>
-      <h1 className="text-2xl font-semibold">Mis clientes</h1>
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="text-2xl font-semibold">Mis clientes</h1>
+        <Link
+          href="/clientes/nuevo"
+          className="rounded-lg bg-amber-800 px-3 py-1.5 text-sm font-medium text-white hover:bg-amber-900"
+        >
+          + Nuevo cliente
+        </Link>
+      </div>
       <p className="mt-1 text-sm text-stone-600">
         {clientes.length} {clientes.length === 1 ? "cliente" : "clientes"}
         {conAlertas > 0

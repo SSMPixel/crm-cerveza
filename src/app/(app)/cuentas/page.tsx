@@ -90,13 +90,21 @@ async function ListaCuentas({
         <h1 className="text-2xl font-semibold">
           {veEquipo ? "Cuentas del equipo" : "Mis cuentas"}
         </h1>
-        <BotonDescargar
-          href={
-            kamFiltro
-              ? `/exportar/cuentas?kam=${kamFiltro}`
-              : "/exportar/cuentas"
-          }
-        />
+        <div className="flex shrink-0 gap-2">
+          <BotonDescargar
+            href={
+              kamFiltro
+                ? `/exportar/cuentas?kam=${kamFiltro}`
+                : "/exportar/cuentas"
+            }
+          />
+          <Link
+            href="/cuentas/nueva"
+            className="rounded-lg bg-amber-800 px-3 py-1.5 text-sm font-medium text-white hover:bg-amber-900"
+          >
+            + Nueva
+          </Link>
+        </div>
       </div>
       <p className="mt-1 text-sm text-stone-600">
         {cuentas.length} cuentas · lo más urgente arriba
