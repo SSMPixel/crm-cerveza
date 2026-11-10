@@ -1,6 +1,6 @@
 // Descarga del historial de visitas en CSV, con los mismos filtros de la pantalla.
 import { hoyMx, nombreResultado } from "@/lib/formato";
-import { contextoExportar, respuestaCsv } from "@/lib/csv";
+import { contextoExportar, respuestaHoja } from "@/lib/csv";
 
 const fecha = new Intl.DateTimeFormat("en-CA", {
   timeZone: "America/Mexico_City",
@@ -76,8 +76,8 @@ export async function GET(request: Request) {
     ];
   });
 
-  return respuestaCsv(
-    `visitas-${hoyMx()}.csv`,
+  return respuestaHoja(
+    `visitas-${hoyMx()}`,
     [
       "Fecha",
       "Hora",
@@ -95,5 +95,6 @@ export async function GET(request: Request) {
       "Fotos",
     ],
     filas,
+    { montos: ["Pedido (MXN)"] },
   );
 }

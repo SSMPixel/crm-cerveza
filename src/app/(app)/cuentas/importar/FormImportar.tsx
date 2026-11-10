@@ -184,7 +184,7 @@ export function FormImportar({
         <h2 className="font-semibold">2. Súbelo</h2>
         <label className="mt-3 flex cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-stone-300 px-4 py-6 text-center hover:border-amber-700">
           <span className="font-medium text-stone-800">
-            {nombreArchivo || "Elegir archivo de Excel"}
+            {nombreArchivo || "Elegir archivo"}
           </span>
           <span className="text-sm text-stone-500">
             {nombreArchivo ? "Toca para cambiarlo" : ".xlsx o .csv"}

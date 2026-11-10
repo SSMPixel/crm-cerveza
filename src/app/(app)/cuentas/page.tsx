@@ -131,7 +131,7 @@ async function ListaCuentas({
             href="/cuentas/importar"
             className="shrink-0 text-sm font-medium text-amber-800 underline-offset-4 hover:underline"
           >
-            Importar desde Excel
+            Importar cuentas
           </Link>
         )}
       </div>

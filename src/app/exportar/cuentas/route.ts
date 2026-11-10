@@ -1,4 +1,4 @@
-// Descarga de la cartera en CSV.
+// Descarga de la cartera (.xlsx).
 import {
   capitalizar,
   estados,
@@ -6,7 +6,7 @@ import {
   nombreEtapa,
   type EstadoSeguimiento,
 } from "@/lib/formato";
-import { contextoExportar, respuestaCsv } from "@/lib/csv";
+import { contextoExportar, respuestaHoja } from "@/lib/csv";
 
 export async function GET(request: Request) {
   const ctx = await contextoExportar();
@@ -48,8 +48,8 @@ export async function GET(request: Request) {
     c.direccion,
   ]);
 
-  return respuestaCsv(
-    `cuentas-${hoyMx()}.csv`,
+  return respuestaHoja(
+    `cuentas-${hoyMx()}`,
     [
       "Cuenta",
       "Tipo",
@@ -69,5 +69,6 @@ export async function GET(request: Request) {
       "Dirección",
     ],
     filas,
+    { montos: ["Pedidos del mes (MXN)", "Objetivo mensual (MXN)"] },
   );
 }
