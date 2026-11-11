@@ -32,7 +32,7 @@ const ambar = "FF92400E";
 
 export async function crearPlantilla(kams: { nombre: string }[]) {
   const libro = new ExcelJS.Workbook();
-  libro.creator = "CRM Cervecero";
+  libro.creator = "Bluepace";
 
   // ---------- Hoja de captura ----------
   const hoja = libro.addWorksheet("Cartera", {

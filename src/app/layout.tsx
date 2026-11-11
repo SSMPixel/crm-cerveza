@@ -2,8 +2,8 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: { default: "CRM Cervecero", template: "%s · CRM Cervecero" },
-  appleWebApp: { capable: true, title: "CRM", statusBarStyle: "default" },
+  title: { default: "Bluepace", template: "%s · Bluepace" },
+  appleWebApp: { capable: true, title: "Bluepace", statusBarStyle: "default" },
   description: "Pipeline y visitas del equipo comercial",
 };
 

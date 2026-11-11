@@ -3,7 +3,7 @@
 // app no publica el aviso propio ni deja publicar avisos de clientes.
 export const identidad = {
   titular: "Sergio Sandoval Muciño",
-  nombreComercial: null as string | null, // pendiente: sesión de nombre
+  nombreComercial: "Bluepace" as string | null,
   domicilio: null as string | null,
   correoPrivacidad: null as string | null, // requiere dominio propio
   dominio: null as string | null,

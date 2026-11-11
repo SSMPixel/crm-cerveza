@@ -36,7 +36,7 @@ export async function respuestaHoja(
   opciones: { montos?: string[] } = {},
 ) {
   const libro = new ExcelJS.Workbook();
-  libro.creator = "CRM Cervecero";
+  libro.creator = "Bluepace";
   const hoja = libro.addWorksheet(nombre.replace(/-.*$/, ""), {
     views: [{ state: "frozen", ySplit: 1 }],
   });

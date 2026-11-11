@@ -4,8 +4,8 @@ import type { MetadataRoute } from "next";
 // sin barra del navegador, con su ícono y su nombre.
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "CRM Cervecero",
-    short_name: "CRM",
+    name: "Bluepace",
+    short_name: "Bluepace",
     description: "Pipeline y visitas del equipo comercial",
     start_url: "/",
     display: "standalone",

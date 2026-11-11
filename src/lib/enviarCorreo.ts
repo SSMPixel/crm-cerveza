@@ -29,8 +29,7 @@ export async function enviarCorreo({
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      from:
-        process.env.RESEND_FROM ?? "Resumen semanal <onboarding@resend.dev>",
+      from: process.env.RESEND_FROM ?? "Bluepace <onboarding@resend.dev>",
       to: destinatarios,
       cc: copias.length ? copias : undefined,
       subject: asunto,
