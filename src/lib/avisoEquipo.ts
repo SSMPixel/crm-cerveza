@@ -41,7 +41,7 @@ FINALIDADES
 Estos tratamientos son necesarios para la relación de trabajo (artículo 9, fracción IV, de la LFPDPPP). Los registros no se usan para publicidad ni para entrenar modelos de inteligencia artificial.
 
 QUIÉN TIENE ACCESO
-Los usuarios autorizados según su función, su manager y las áreas de ${empresa} que lo necesiten. ${prestador()} opera la plataforma y presta consultoría comercial a ${empresa}: trata estos datos por cuenta de ${empresa}, bajo confidencialidad y sus instrucciones. Los proveedores de alojamiento, envío de correo y mapas de la plataforma pueden tratar información fuera de México con obligaciones de protección. No se transfieren estos datos a terceros, salvo requerimiento fundado de autoridad.
+Los usuarios autorizados según su función, su manager y las áreas de ${empresa} que lo necesiten. La plataforma la opera ${prestador()}, quien presta consultoría comercial a ${empresa} y trata estos datos por cuenta de ${empresa}, bajo confidencialidad y siguiendo sus instrucciones. Los proveedores de alojamiento, envío de correo y mapas de la plataforma pueden tratar información fuera de México con obligaciones de protección. No se transfieren estos datos a terceros, salvo requerimiento fundado de autoridad.
 
 INDICADORES Y REVISIÓN HUMANA
 Los indicadores y alertas reflejan lo registrado y pueden tener errores; una alerta de distancia no demuestra por sí sola una ausencia. Ninguna sanción, descuento o terminación se decide de forma automática: una persona revisa el contexto y sus aclaraciones antes de decidir. Puede pedir una explicación, la revisión de un indicador y la corrección de sus registros en [Área y correo de privacidad].

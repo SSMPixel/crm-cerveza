@@ -51,7 +51,7 @@ export function FormAltaPersona({
   if (estado.ok) {
     const o = estado.ok;
     const url = typeof window !== "undefined" ? window.location.origin : "";
-    const mensaje = `Hola ${o.nombre}, ya tienes acceso a la app del equipo. Entra en ${url} con tu correo ${o.correo} y la contraseña ${o.contrasena}. Puedes cambiarla en "Mi perfil".`;
+    const mensaje = `Hola ${o.nombre}, ya tienes acceso a la app del equipo. Entra en ${url} con tu correo ${o.correo} y la contraseña ${o.contrasena}. Puedes cambiarla en "Mi perfil". Al entrar por primera vez verás el aviso de privacidad de la empresa.`;
     const wa = ligaWhatsApp(o.telefono, mensaje);
     return (
       <div className="rounded-xl border border-green-200 bg-green-50 p-4">
