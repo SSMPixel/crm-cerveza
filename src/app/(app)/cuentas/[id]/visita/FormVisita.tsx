@@ -23,6 +23,9 @@ type Props = {
 };
 
 type Ubicacion =
+  | { estado: "revisando" } // viendo si ya hay permiso
+  | { estado: "pendiente" } // falta que el KAM decida
+  | { estado: "omitida" } // eligió registrar sin ubicación
   | { estado: "buscando" }
   | { estado: "lista"; lat: number; lng: number; precision: number }
   | { estado: "error"; mensaje: string };
@@ -32,6 +35,7 @@ const motivos = [
   "WhatsApp",
   "Cita en otro lugar",
   "GPS sin señal",
+  "Sin permiso de ubicación",
   "Otro",
 ];
 const etapasElegibles = [
@@ -74,7 +78,9 @@ export function FormVisita(p: Props) {
   const [resultado, setResultado] = useState("");
   const [fotos, setFotos] = useState<string[]>([]);
   const [subiendoFotos, setSubiendoFotos] = useState(false);
-  const [ubicacion, setUbicacion] = useState<Ubicacion>({ estado: "buscando" });
+  const [ubicacion, setUbicacion] = useState<Ubicacion>({
+    estado: "revisando",
+  });
   const [intento, setIntento] = useState(0);
   const [motivo, setMotivo] = useState("");
   const [fecha, setFecha] = useState("");
@@ -89,27 +95,55 @@ export function FormVisita(p: Props) {
   const sinSoporte =
     typeof window !== "undefined" && !("geolocation" in navigator);
 
+  // La ubicación se pide solo después de explicar para qué se usa. Si el KAM ya
+  // dio permiso antes, se toma directo (el navegador no vuelve a preguntar).
   useEffect(() => {
     if (sinSoporte) return;
-    navigator.geolocation.getCurrentPosition(
-      (pos) =>
-        setUbicacion({
-          estado: "lista",
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
-          precision: Math.round(pos.coords.accuracy),
-        }),
-      (err) =>
-        setUbicacion({
-          estado: "error",
-          mensaje:
-            err.code === err.PERMISSION_DENIED
-              ? "No diste permiso de ubicación. Actívalo en tu navegador para registrar visitas en el lugar."
-              : "No pudimos obtener tu ubicación.",
-        }),
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 },
-    );
+    let vigente = true;
+    const pedir = () =>
+      navigator.geolocation.getCurrentPosition(
+        (pos) =>
+          vigente &&
+          setUbicacion({
+            estado: "lista",
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+            precision: Math.round(pos.coords.accuracy),
+          }),
+        (err) =>
+          vigente &&
+          setUbicacion({
+            estado: "error",
+            mensaje:
+              err.code === err.PERMISSION_DENIED
+                ? "No diste permiso de ubicación. Puedes activarlo en tu navegador o registrar sin ubicación indicando el motivo."
+                : "No pudimos obtener tu ubicación.",
+          }),
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 },
+      );
+    if (intento > 0) pedir();
+    else if (navigator.permissions?.query)
+      navigator.permissions
+        .query({ name: "geolocation" })
+        .then((r) =>
+          r.state === "granted"
+            ? pedir()
+            : vigente && setUbicacion({ estado: "pendiente" }),
+        )
+        .catch(() => vigente && setUbicacion({ estado: "pendiente" }));
+    else
+      Promise.resolve().then(
+        () => vigente && setUbicacion({ estado: "pendiente" }),
+      );
+    return () => {
+      vigente = false;
+    };
   }, [intento, sinSoporte]);
+
+  function usarUbicacion() {
+    setUbicacion({ estado: "buscando" });
+    setIntento((n) => n + 1);
+  }
 
   const ubicacionActual: Ubicacion = sinSoporte
     ? { estado: "error", mensaje: "Este navegador no puede dar tu ubicación." }
@@ -128,6 +162,7 @@ export function FormVisita(p: Props) {
       : null;
   const pideMotivo =
     ubicacionActual.estado === "error" ||
+    ubicacionActual.estado === "omitida" ||
     (distancia !== null && distancia > p.radio);
 
   // Validación propia, con mensajes en español junto a cada campo
@@ -138,6 +173,13 @@ export function FormVisita(p: Props) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     const nuevos: Record<string, string> = {};
+    if (
+      ubicacionActual.estado === "pendiente" ||
+      ubicacionActual.estado === "revisando"
+    )
+      nuevos.ubicacion = "Elige si usas tu ubicación o registras sin ella.";
+    else if (ubicacionActual.estado === "buscando")
+      nuevos.ubicacion = "Espera un momento: estamos obteniendo tu ubicación.";
     if (pideMotivo && !fd.get("motivo"))
       nuevos.motivo = "Elige por qué registras desde aquí.";
     if (
@@ -198,15 +240,72 @@ export function FormVisita(p: Props) {
       }}
       onClickCapture={(e) => {
         // Los botones de opción (resultado, motivo, fechas) también cuentan.
-        if ((e.target as HTMLElement).closest('button[type="button"]'))
+        if (
+          (e.target as HTMLElement).closest(
+            'button[type="button"]:not([data-neutral])',
+          )
+        )
           setSucio(true);
       }}
       noValidate
       className="mt-6 space-y-6"
     >
       {/* ---------- Ubicación ---------- */}
-      <section className="rounded-xl border border-stone-200 bg-white p-4">
+      <section
+        id="campo-ubicacion"
+        className="rounded-xl border border-stone-200 bg-white p-4"
+      >
         <h2 className="text-sm font-semibold text-stone-600">Ubicación</h2>
+        {ubicacionActual.estado === "revisando" && (
+          <p className="mt-1 text-stone-600">Un momento…</p>
+        )}
+        {ubicacionActual.estado === "pendiente" && (
+          <div className="mt-1">
+            <p className="text-stone-800">
+              Usaremos tu ubicación solo para calcular la distancia al punto de
+              venta al registrar esta visita.
+            </p>
+            <p className="mt-1 text-sm text-stone-600">
+              No guardamos tus coordenadas ni te seguimos durante el día.
+            </p>
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              <button
+                type="button"
+                data-neutral
+                onClick={usarUbicacion}
+                className="rounded-lg bg-amber-800 px-4 py-2.5 font-medium text-white hover:bg-amber-900"
+              >
+                Usar mi ubicación
+              </button>
+              <button
+                type="button"
+                data-neutral
+                onClick={() => setUbicacion({ estado: "omitida" })}
+                className="rounded-lg border border-stone-300 bg-white px-4 py-2.5 font-medium text-stone-800"
+              >
+                Registrar sin ubicación
+              </button>
+            </div>
+          </div>
+        )}
+        {ubicacionActual.estado === "omitida" && (
+          <p className="mt-1 text-stone-700">
+            Registrarás sin ubicación; indica el motivo abajo.{" "}
+            <button
+              type="button"
+              data-neutral
+              onClick={usarUbicacion}
+              className="font-medium text-amber-800 underline underline-offset-4"
+            >
+              Mejor usar mi ubicación
+            </button>
+          </p>
+        )}
+        {errores.ubicacion && (
+          <p role="alert" className="mt-2 text-sm font-medium text-red-700">
+            {errores.ubicacion}
+          </p>
+        )}
         {ubicacionActual.estado === "buscando" && (
           <p className="mt-1">Obteniendo tu ubicación…</p>
         )}
@@ -224,10 +323,8 @@ export function FormVisita(p: Props) {
             <p className="mt-1 text-orange-700">{ubicacionActual.mensaje}</p>
             <button
               type="button"
-              onClick={() => {
-                setUbicacion({ estado: "buscando" });
-                setIntento((n) => n + 1);
-              }}
+              data-neutral
+              onClick={usarUbicacion}
               className="mt-2 text-sm font-medium text-amber-800 underline underline-offset-4"
             >
               Intentar de nuevo
@@ -238,6 +335,14 @@ export function FormVisita(p: Props) {
           <>
             <input type="hidden" name="lat" value={ubicacionActual.lat} />
             <input type="hidden" name="lng" value={ubicacionActual.lng} />
+            <input
+              type="hidden"
+              name="precision"
+              value={ubicacionActual.precision}
+            />
+            <p className="mt-1 text-xs text-stone-500">
+              Solo se guarda la distancia al punto de venta, no tus coordenadas.
+            </p>
           </>
         )}
 

@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { iniciarSesion, type EstadoLogin } from "./acciones";
 import { CampoContrasena } from "@/components/CampoContrasena";
+import { identidadCompleta } from "@/lib/identidad";
 
 export default function PaginaLogin() {
   const [estado, accion, enviando] = useActionState<EstadoLogin, FormData>(
@@ -58,6 +59,15 @@ export default function PaginaLogin() {
             {enviando ? "Entrando…" : "Entrar"}
           </button>
         </form>
+        {identidadCompleta() && (
+          <p className="mt-6 text-center text-xs text-stone-500">
+            Consulta cómo tratamos tus datos en nuestro{" "}
+            <a href="/privacidad" className="underline underline-offset-2">
+              aviso de privacidad
+            </a>
+            .
+          </p>
+        )}
       </div>
     </main>
   );

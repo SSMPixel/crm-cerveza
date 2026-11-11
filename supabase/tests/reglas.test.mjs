@@ -16,7 +16,7 @@ await db.exec(`
   create table storage.buckets (id text primary key, name text, public boolean,
     file_size_limit bigint, allowed_mime_types text[]);
   create table storage.objects (id uuid primary key default gen_random_uuid(),
-    bucket_id text, name text, owner uuid default auth.uid());
+    bucket_id text, name text, owner uuid default auth.uid(), created_at timestamptz default now());
   alter table storage.objects enable row level security;
   create function storage.foldername(name text) returns text[] language sql immutable as
     $$ select (string_to_array(name, '/'))[1:array_length(string_to_array(name, '/'), 1) - 1] $$;
@@ -303,6 +303,65 @@ if (archivos.some(f => f.includes('0011'))) {
   check('Otro KAM no ve planes ajenos', r.rows?.[0]?.n === 0);
   r = await as(U.man, `select fijar_plan_dia(array['${cuenta1}']::uuid[]) as p`);
   check('El manager no fija planes', !!r.error || r.rows?.[0]?.p === null);
+}
+
+// ---------- Privacidad (0012) ----------
+if (archivos.some(f => f.includes('0012'))) {
+  await db.exec(`reset role; update cuentas set kam_id = '${U.k1}', lat = 19.4190, lng = -99.1613 where id = '${cuenta1}';`);
+  r = await as(U.k1, `select * from registrar_visita('${cuenta1}', 19.4191, -99.1614, null, null, 'Seguimiento', hoy_mx() + 1, true, null, null, null, '{}', 12)`);
+  const vid = r.rows?.[0]?.visita_id;
+  check('La visita se registra con distancia', r.rows?.[0]?.distancia !== null && r.rows?.[0]?.distancia < 50);
+  r = await as(U.man, `select lat, lng, precision_m, distancia_m from visitas where id = '${vid}'`);
+  check('No se guardan las coordenadas del KAM', r.rows?.[0]?.lat === null && r.rows[0].lng === null);
+  check('Sí se guarda la precisión del GPS', r.rows?.[0]?.precision_m === 12);
+  r = await as(U.man, `select count(*)::int n from visitas where lat is not null or lng is not null`);
+  check('No queda ninguna coordenada guardada', r.rows?.[0]?.n === 0);
+  await db.exec(`reset role; insert into visitas (empresa_id, cuenta_id, kam_id, lat, lng, distancia_m) values ('${E1}', '${cuenta1}', '${U.k1}', 19.4, -99.1, 10);`);
+  r = await db.query(`select count(*)::int n from visitas where lat is not null`);
+  check('Ni en cargas administrativas', r.rows?.[0]?.n === 0);
+
+  r = await as(U.k1, `insert into avisos_privacidad (empresa_id, texto) values ('${E1}', repeat('x', 250)) returning id`);
+  check('El KAM no publica avisos', !!r.error);
+  r = await as(U.man, `insert into avisos_privacidad (empresa_id, texto) values ('${E1}', repeat('a', 250)) returning id, version`);
+  check('El manager publica el aviso v1', r.rows?.[0]?.version === 1);
+  const av1 = r.rows?.[0]?.id;
+  r = await as(U.man, `insert into avisos_privacidad (empresa_id, texto, version) values ('${E1}', repeat('b', 250), 9) returning id, version`);
+  check('Cada publicación es una versión nueva', r.rows?.[0]?.version === 2);
+  const av2 = r.rows?.[0]?.id;
+  r = await as(U.man, `insert into avisos_privacidad (empresa_id, texto) values ('${E1}', 'corto') returning id`);
+  check('Un aviso vacío o muy corto se rechaza', !!r.error);
+  r = await as(U.man, `insert into avisos_privacidad (empresa_id, texto) values ('${E2}', repeat('c', 250)) returning id`);
+  check('El manager no publica avisos de otra empresa', !!r.error);
+  r = await as(U.k1, `select version from avisos_privacidad order by version desc limit 1`);
+  check('El KAM lee el aviso de su empresa', r.rows?.[0]?.version === 2);
+  r = await as(U.k1, `insert into constancias_aviso (perfil_id, aviso_id) values ('${U.k1}', '${av2}') returning vista_en`);
+  check('El KAM deja constancia de que lo vio', r.rows?.length === 1);
+  r = await as(U.k1, `insert into constancias_aviso (perfil_id, aviso_id) values ('${U.k2}', '${av2}') returning vista_en`);
+  check('Nadie deja constancia por otro', !!r.error);
+  r = await as(U.man, `select count(*)::int n from constancias_aviso`);
+  check('El manager ve las constancias de su equipo', r.rows?.[0]?.n === 1);
+  r = await as(U.man, `update avisos_privacidad set texto = repeat('z', 300) where id = '${av1}' returning id`);
+  check('Un aviso publicado no se edita', !r.rows?.length);
+
+  await db.exec(`reset role;
+    insert into visitas (empresa_id, cuenta_id, kam_id, fecha_hora, distancia_m, fotos) values
+      ('${E1}', '${cuenta1}', '${U.k1}', now() - interval '25 months', 5, '{}'),
+      ('${E1}', '${cuenta1}', '${U.k1}', now() - interval '25 months', 5, array['${E1}/${cuenta1}/vieja.jpg']),
+      ('${E1}', '${cuenta1}', '${U.k1}', now() - interval '23 months', 5, '{}');
+    insert into comentarios (empresa_id, cuenta_id, autor_id, texto, creado_en) values ('${E1}', '${cuenta1}', '${U.man}', 'viejo', now() - interval '25 months');
+    insert into storage.objects (bucket_id, name, created_at) values
+      ('fotos-visitas', 'huerfana.jpg', now() - interval '3 days'),
+      ('fotos-visitas', 'reciente.jpg', now()),
+      ('fotos-visitas', '${E1}/${cuenta1}/vieja.jpg', now() - interval '3 days');`);
+  r = await db.query(`select aplicar_conservacion() as x`);
+  const x = r.rows?.[0]?.x;
+  check('Conservación borra la actividad de más de 24 meses', x?.visitas === 1 && x?.comentarios === 1);
+  r = await db.query(`select count(*)::int n from visitas where fecha_hora < now() - interval '24 months'`);
+  check('…pero espera a que se borren las fotos', r.rows?.[0]?.n === 1);
+  r = await db.query(`select count(*)::int n from visitas where fecha_hora between now() - interval '24 months' and now() - interval '22 months'`);
+  check('…y no toca lo de menos de 24 meses', r.rows?.[0]?.n === 1);
+  r = await db.query(`select * from fotos_huerfanas()`);
+  check('Detecta fotos huérfanas viejas', r.rows?.length === 1 && Object.values(r.rows[0])[0] === 'huerfana.jpg');
 }
 
 console.log(`\n${ok} correctas, ${fail} fallas`);

@@ -6,6 +6,8 @@ import { empresaEnVista } from "@/lib/clienteActivo";
 import { nombreRol } from "@/lib/formato";
 import { FormAltaPersona } from "@/components/FormAltaPersona";
 import { agregarPersona, guardarAjustes, guardarPersona } from "./acciones";
+import Link from "next/link";
+import { avisoVigente } from "@/lib/avisoEquipo";
 
 export const metadata = { title: "Equipo y ajustes" };
 
@@ -62,6 +64,20 @@ async function Contenido({
   ]);
   if (!empresa) return <p>No se encontró la empresa.</p>;
 
+  // Aviso de privacidad: versión vigente y quién ya la vio.
+  const aviso = await avisoVigente(supabase, empresaId);
+  const equipoActivo = (gente ?? []).filter(
+    (p) => p.activo && p.rol !== "auditor",
+  );
+  const { data: constancias } = aviso
+    ? await supabase
+        .from("constancias_aviso")
+        .select("perfil_id")
+        .eq("aviso_id", aviso.id)
+    : { data: [] };
+  const vieron = new Set((constancias ?? []).map((c) => c.perfil_id));
+  const faltan = equipoActivo.filter((p) => !vieron.has(p.id));
+
   return (
     <>
       <h1 className="text-2xl font-semibold">Equipo y ajustes</h1>
@@ -83,6 +99,51 @@ async function Contenido({
           {errores[sp.error]}
         </p>
       )}
+
+      {/* ---------- Aviso de privacidad ---------- */}
+      <section className="mt-6">
+        <h2 className="font-semibold">Aviso de privacidad</h2>
+        <div
+          className={`mt-2 rounded-xl border p-4 ${aviso ? "border-stone-200 bg-white" : "border-orange-200 bg-orange-50"}`}
+        >
+          {aviso ? (
+            <>
+              <p className="text-stone-800">
+                Versión {aviso.version} publicada ·{" "}
+                {equipoActivo.length - faltan.length} de {equipoActivo.length}{" "}
+                personas ya la vieron
+              </p>
+              {faltan.length > 0 && (
+                <p className="mt-1 text-sm text-stone-600">
+                  Falta: {faltan.map((p) => p.nombre).join(", ")}. La verán al
+                  entrar.
+                </p>
+              )}
+            </>
+          ) : (
+            <p className="text-orange-800">
+              Sin aviso publicado. Es necesario antes de trabajar con datos
+              reales del equipo.
+            </p>
+          )}
+          <div className="mt-3 flex flex-wrap gap-3 text-sm font-medium">
+            <Link
+              href="/equipo/aviso"
+              className="rounded-lg bg-amber-800 px-3 py-1.5 text-white hover:bg-amber-900"
+            >
+              {aviso ? "Actualizar aviso" : "Preparar aviso"}
+            </Link>
+            {aviso && (
+              <Link
+                href="/aviso"
+                className="rounded-lg border border-stone-300 bg-white px-3 py-1.5 text-stone-800"
+              >
+                Ver el vigente
+              </Link>
+            )}
+          </div>
+        </div>
+      </section>
 
       {/* ---------- Ajustes de la empresa ---------- */}
       <section className="mt-6">

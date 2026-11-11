@@ -69,6 +69,7 @@ export async function registrarVisita(
     p_nueva_etapa: texto("etapa") || null,
     p_resultado: resultadosValidos.has(resultado) ? resultado : null,
     p_fotos: fotos,
+    p_precision: numero("precision"),
   });
 
   if (error) {

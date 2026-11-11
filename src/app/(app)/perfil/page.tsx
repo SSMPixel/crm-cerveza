@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Suspense } from "react";
 import { obtenerPerfil } from "@/lib/sesion";
 import { nombreRol } from "@/lib/formato";
@@ -96,6 +97,23 @@ async function Contenido({
         </p>
         <ElegirTema />
       </section>
+
+      {perfil?.empresa && (
+        <Link
+          href="/aviso"
+          className="mt-6 flex items-center justify-between rounded-xl border border-stone-200 bg-white p-4"
+        >
+          <span>
+            <span className="block font-semibold">Aviso de privacidad</span>
+            <span className="text-sm text-stone-600">
+              Cómo usa {perfil.empresa} tus datos en esta herramienta
+            </span>
+          </span>
+          <span aria-hidden className="text-stone-400">
+            ›
+          </span>
+        </Link>
+      )}
 
       <form action={cerrarSesion} className="mt-8">
         <button className="text-sm text-stone-600 underline underline-offset-4">
