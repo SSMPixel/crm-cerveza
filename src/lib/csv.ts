@@ -37,7 +37,27 @@ export async function respuestaHoja(
 ) {
   const libro = new ExcelJS.Workbook();
   libro.creator = "Bluepace";
-  const hoja = libro.addWorksheet(nombre.replace(/-.*$/, ""), {
+  agregarHoja(libro, nombre.replace(/-.*$/, ""), encabezados, filas, opciones);
+  const contenido = await libro.xlsx.writeBuffer();
+  return new Response(contenido as ArrayBuffer, {
+    headers: {
+      "Content-Type":
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "Content-Disposition": `attachment; filename="${nombre}.xlsx"`,
+      "Cache-Control": "no-store",
+    },
+  });
+}
+
+/** Agrega una pestaña con títulos fijos, filtros, anchos y formato de pesos. */
+export function agregarHoja(
+  libro: ExcelJS.Workbook,
+  titulo: string,
+  encabezados: string[],
+  filas: unknown[][],
+  opciones: { montos?: string[]; anchoMax?: number } = {},
+) {
+  const hoja = libro.addWorksheet(titulo, {
     views: [{ state: "frozen", ySplit: 1 }],
   });
   hoja.addRow(encabezados);
@@ -63,19 +83,10 @@ export async function respuestaHoja(
       t.length,
       ...filas.slice(0, 300).map((f) => String(f[i] ?? "").length),
     );
-    col.width = Math.min(Math.max(largo + 2, 8), 50);
+    col.width = Math.min(Math.max(largo + 2, 8), opciones.anchoMax ?? 50);
     if (opciones.montos?.includes(t)) col.numFmt = '"$"#,##0';
   });
-
-  const contenido = await libro.xlsx.writeBuffer();
-  return new Response(contenido as ArrayBuffer, {
-    headers: {
-      "Content-Type":
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      "Content-Disposition": `attachment; filename="${nombre}.xlsx"`,
-      "Cache-Control": "no-store",
-    },
-  });
+  return hoja;
 }
 
 /** Usuario actual y la empresa que está viendo (para el auditor, su cliente activo). */

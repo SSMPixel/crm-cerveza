@@ -5,6 +5,7 @@ import { obtenerPerfil } from "@/lib/sesion";
 import { empresaEnVista } from "@/lib/clienteActivo";
 import { nombreRol } from "@/lib/formato";
 import { FormAltaPersona } from "@/components/FormAltaPersona";
+import { ExportarTodo } from "@/components/ExportarTodo";
 import { agregarPersona, guardarAjustes, guardarPersona } from "./acciones";
 import Link from "next/link";
 import { avisoVigente } from "@/lib/avisoEquipo";
@@ -263,6 +264,25 @@ async function Contenido({
             accion={agregarPersona}
             puedeManager={perfil.rol === "auditor"}
           />
+        </div>
+      </section>
+
+      {/* ---------- Exportación de salida ---------- */}
+      <section className="mt-8">
+        <h2 className="font-semibold">Tu información</h2>
+        <div className="mt-2 rounded-xl border border-stone-200 bg-white p-4">
+          <p className="text-stone-800">
+            Descarga todo lo que tiene {empresa.nombre} en la app: equipo,
+            cuentas, visitas, pedidos, conversación, planes del día, avisos y
+            fotos, en un solo archivo .zip.
+          </p>
+          <p className="mt-1 text-sm text-stone-600">
+            Con muchas fotos puede tardar unos minutos. Mejor hazlo desde una
+            computadora.
+          </p>
+          <div className="mt-3">
+            <ExportarTodo />
+          </div>
         </div>
       </section>
     </>
