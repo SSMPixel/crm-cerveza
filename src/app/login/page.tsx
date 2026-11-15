@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
 import { iniciarSesion, type EstadoLogin } from "./acciones";
 import { CampoContrasena } from "@/components/CampoContrasena";
@@ -59,6 +60,14 @@ export default function PaginaLogin() {
             {enviando ? "Entrando…" : "Entrar"}
           </button>
         </form>
+        <p className="mt-4 text-center text-sm">
+          <Link
+            href="/login/recuperar"
+            className="font-medium text-amber-800 underline underline-offset-2"
+          >
+            ¿Olvidaste tu contraseña?
+          </Link>
+        </p>
         {identidadCompleta() && (
           <p className="mt-6 text-center text-xs text-stone-500">
             Consulta cómo tratamos tus datos en nuestro{" "}

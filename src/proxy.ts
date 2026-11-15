@@ -5,7 +5,8 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 // /api/ revisa su propio permiso (la firma de Vercel), no la sesión.
-const rutasPublicas = ["/login", "/api/", "/privacidad"];
+// /auth/ recibe el enlace del correo de recuperación (todavía sin sesión).
+const rutasPublicas = ["/login", "/api/", "/auth/", "/privacidad"];
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
